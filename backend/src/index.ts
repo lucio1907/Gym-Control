@@ -1,6 +1,7 @@
 import app from "./app";
 import configServer from "./config/configServer.config";
 import sequelizeConfig from "./config/sequelize.config";
+import "./models/associations";
 
 const main = async (): Promise<void> => {
   try {
