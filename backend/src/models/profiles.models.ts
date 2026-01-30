@@ -46,6 +46,11 @@ const ProfileModel = sequelizeConfig.define("profile", {
     type: DataTypes.DATE,
     allowNull: true,
   },
+  marked_days: {
+    type: DataTypes.DECIMAL,
+    allowNull: false,
+    defaultValue: 0
+  }
 });
 
 export default ProfileModel;

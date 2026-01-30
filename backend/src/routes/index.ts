@@ -2,11 +2,13 @@ import { Router, Request, Response } from "express";
 import profileRouter from "./profiles/profile.routes";
 import errorHandler from "../middlewares/errorHandler.middleware";
 import qrsRouter from "./qrs/qrs.routes";
+import attendanceRouter from "./attendance/attendance.routes";
 
 const routes = Router();
 
 routes.use("/api/profiles", profileRouter);
 routes.use("/api/qrs", qrsRouter);
+routes.use("/api/attendance", attendanceRouter)
 
 routes.use(errorHandler)
 

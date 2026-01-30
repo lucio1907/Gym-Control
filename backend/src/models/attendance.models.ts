@@ -23,7 +23,7 @@ const AttendanceModel = sequelizeConfig.define("attendance", {
     defaultValue: Date.now(),
   },
   method: {
-    type: DataTypes.ENUM("manual_admin", "qr_code"),
+    type: DataTypes.ENUM("MANUAL", "QR_SCAN"),
     allowNull: false,
   },
 });
