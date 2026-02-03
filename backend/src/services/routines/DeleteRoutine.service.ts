@@ -1,12 +1,11 @@
 import { Model } from "sequelize";
 import RoutinesModel from "../../models/routines.models";
 import NotFoundException from "../../errors/NotFoundException";
+import { BaseService } from "../BaseService.service";
 
-class DeleteRoutineService {
-    private collection;
-
+class DeleteRoutineService extends BaseService<Model> {
     constructor() {
-        this.collection = RoutinesModel;
+        super(RoutinesModel);
     }
 
     private checkIfExists = async (id: string): Promise<Model | null> => {

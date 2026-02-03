@@ -1,9 +1,10 @@
-import { Optional } from "sequelize";
+import { Model, Optional } from "sequelize";
 import BadRequestException from "../../errors/BadRequestException";
 import ProfileModel from "../../models/profiles.models";
 import { v4 as uuid } from "uuid";
 import { hashPassword } from "../../utils/hashPassword.utils";
 import calculateBillingDate from "../../utils/billingDate.utils";
+import { BaseService } from "../BaseService.service";
 
 interface RegisterBody {
   name: string;
@@ -27,11 +28,9 @@ interface Profile {
   expiration_day: Date;
 }
 
-class RegisterProfile {
-  private collection;
-
+class RegisterProfile extends BaseService<Model>{
   constructor() {
-    this.collection = ProfileModel;
+    super(ProfileModel);
   }
 
   private checkExistentUser = async (email: string) => {

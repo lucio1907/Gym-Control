@@ -1,7 +1,9 @@
+import { Model } from "sequelize";
 import BadRequestException from "../../errors/BadRequestException";
 import NotFoundException from "../../errors/NotFoundException";
 import RoutinesModel from "../../models/routines.models";
 import { RoutineContent } from "../../types/routines.types";
+import { BaseService } from "../BaseService.service";
 
 interface UpdateBody {
     routine_name?: string;
@@ -9,15 +11,13 @@ interface UpdateBody {
     is_active?: boolean;
 }
 
-class UpdateRoutineService {
-    private routineCollection;
-
+class UpdateRoutineService extends BaseService<Model>{
     constructor() {
-        this.routineCollection = RoutinesModel;
+        super(RoutinesModel);
     }
 
     private checkDuplicateName = async (name: string, currentId: string): Promise<boolean> => {
-        const exists = await this.routineCollection.findOne({ 
+        const exists = await this.collection.findOne({ 
             where: { routine_name: name } 
         });
         // Es duplicado solo si el ID es distinto al que estamos editando
@@ -28,7 +28,7 @@ class UpdateRoutineService {
         const { routine_name, routine_content } = body;
 
         // 1. Buscar la rutina por ID
-        const routine = await this.routineCollection.findByPk(id);
+        const routine = await this.collection.findByPk(id);
         if (!routine) throw new NotFoundException('Routine not found');
 
         // 2. Validar que el nuevo nombre no esté ocupado por OTRA rutina

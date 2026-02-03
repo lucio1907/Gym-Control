@@ -1,19 +1,19 @@
+import { Model } from "sequelize";
 import BadRequestException from "../../errors/BadRequestException";
 import NotFoundException from "../../errors/NotFoundException";
 import ProfileModel from "../../models/profiles.models";
 import { comparePassword } from "../../utils/hashPassword.utils";
 import jwtManagement from "../../utils/jwt.utils";
+import { BaseService } from "../BaseService.service";
 
 interface LoginBody {
   email: string;
   password: string;
 }
 
-class LoginProfileService {
-  private collection;
-
-  constructor() {
-    this.collection = ProfileModel;
+class LoginProfileService extends BaseService<Model> {
+  constructor() { 
+    super(ProfileModel);
   }
 
   private checkExistentUser = async (email: string) => {

@@ -5,23 +5,20 @@ import RoutinesModel from "../../models/routines.models";
 import { v4 as uuid } from "uuid";
 import NotFoundException from "../../errors/NotFoundException";
 import { Routine, RoutineContent } from "../../types/routines.types";
+import { BaseService } from "../BaseService.service";
 
 interface Body {
     routine_name: string
     routine_content: RoutineContent;
 }
 
-class CreateRoutineService {
-    private profileCollection;
-    private routineCollection;
-
-    constructor() {
-        this.profileCollection = ProfileModel;
-        this.routineCollection = RoutinesModel;
+class CreateRoutineService extends BaseService<Model> {
+    constructor(private readonly profileCollection = ProfileModel) {
+        super(RoutinesModel)
     }
 
     private checkIfExists = async (routineName: string): Promise<Model | null> => {
-        const exists = await this.routineCollection.findOne({ where: { routine_name: routineName } });
+        const exists = await this.collection.findOne({ where: { routine_name: routineName } });
         return exists;
     };
 
@@ -48,7 +45,7 @@ class CreateRoutineService {
             routine_content 
         }
 
-        await this.routineCollection.create(newRoutine);
+        await this.collection.create(newRoutine);
 
         return newRoutine;
     };

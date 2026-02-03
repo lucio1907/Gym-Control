@@ -1,11 +1,10 @@
 import { Model } from "sequelize";
 import ProfileModel from "../../models/profiles.models";
+import { BaseService } from "../BaseService.service";
 
-class GetAdminsService {
-    private collection;
-
+class GetAdminsService extends BaseService<Model> {
     constructor() {
-        this.collection = ProfileModel;
+        super(ProfileModel)
     }
 
     public get = async (): Promise<Model[]> => {

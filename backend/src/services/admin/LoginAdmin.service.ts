@@ -4,17 +4,16 @@ import BadRequestException from "../../errors/BadRequestException";
 import NotFoundException from "../../errors/NotFoundException";
 import { comparePassword } from "../../utils/hashPassword.utils";
 import jwtManagement from "../../utils/jwt.utils";
+import { BaseService } from "../BaseService.service";
 
 interface Body {
     email: string
     password: string
 }
 
-class LoginAdminService {
-    private collection;
-
+class LoginAdminService extends BaseService<Model> {
     constructor() {
-        this.collection = ProfileModel;
+        super(ProfileModel)
     }
 
     private checkAdmin = async (email: string, rol: string): Promise<Model | null> => {

@@ -3,6 +3,7 @@ import BadRequestException from "../../errors/BadRequestException";
 import ProfileModel from "../../models/profiles.models";
 import { v4 as uuid } from "uuid";
 import { hashPassword } from "../../utils/hashPassword.utils";
+import { BaseService } from "../BaseService.service";
 
 interface Body {
   name: string;
@@ -18,11 +19,9 @@ interface Admin extends Body {
   id: string;
 }
 
-class CreateAdminService {
-  private collection;
-
+class CreateAdminService extends BaseService<Model> {
   constructor() {
-    this.collection = ProfileModel;
+    super(ProfileModel)
   }
 
   private checkAdmin = async (email: string): Promise<Model | null> => {

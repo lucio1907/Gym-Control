@@ -1,12 +1,11 @@
 import { Model } from "sequelize";
 import ProfileModel from "../../models/profiles.models";
 import NotFoundException from "../../errors/NotFoundException";
+import { BaseService } from "../BaseService.service";
 
-class DeleteAdminService {
-    private collection;
-
+class DeleteAdminService extends BaseService<Model>{
     constructor() {
-        this.collection = ProfileModel;
+        super(ProfileModel);
     }
 
     private checkAdmin = async (id: string): Promise<Model | any> => {

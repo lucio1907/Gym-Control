@@ -17,6 +17,14 @@ export const createAdmin = async (req: Request, res: Response, next: NextFunctio
 export const loginAdmin = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const admin = await loginAdminService.login(req.body);
+
+        res.cookie("access_token", admin?.access_token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: 'strict',
+            maxAge: 1000 * 60 * 60 * 24 * 7
+        });
+
         return res.json({ message: "Admin logged in", data: admin, status: "OK" });
     } catch (error) {
         next(error);

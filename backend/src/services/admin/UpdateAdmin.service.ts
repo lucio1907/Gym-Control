@@ -1,5 +1,7 @@
+import { Model } from "sequelize";
 import NotFoundException from "../../errors/NotFoundException";
 import ProfileModel from "../../models/profiles.models";
+import { BaseService } from "../BaseService.service";
 
 interface BodyToUpdate {
   name?: string;
@@ -7,11 +9,9 @@ interface BodyToUpdate {
   phone?: string;
 }
 
-class UpdateAdminService {
-  private collection;
-
+class UpdateAdminService extends BaseService<Model> {
   constructor() {
-    this.collection = ProfileModel;
+    super(ProfileModel);
   }
 
   public update = async (id: string, body: BodyToUpdate) => {

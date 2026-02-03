@@ -5,6 +5,7 @@ import BadRequestException from "../../errors/BadRequestException";
 import { v4 as uuid } from "uuid";
 import AttendanceModel from "../../models/attendance.models";
 import { Model, Optional } from "sequelize";
+import { BaseService } from "../BaseService.service";
 
 interface NewAttendance {
     id: string
@@ -13,15 +14,12 @@ interface NewAttendance {
     method: string
 }
 
-class AttendanceService {
-    private qrCollection;
-    private profileCollection;
-    private attendanceCollection;
-
-    constructor() {
-        this.qrCollection = TemporalQrModel;
-        this.profileCollection = ProfileModel;
-        this.attendanceCollection = AttendanceModel
+class AttendanceService extends BaseService<Model> {
+    constructor(
+        private readonly qrCollection = TemporalQrModel,
+        private readonly profileCollection = ProfileModel
+    ) {
+        super(AttendanceModel)
     }
 
     private checkProfileOverdue = async (profileId: string): Promise<Model> => {
@@ -48,7 +46,7 @@ class AttendanceService {
         // Recargar la instancia para que el "return" tenga el valor actualizado
         await profile.reload();
 
-        const newAttendance: Optional<NewAttendance, any> = await this.attendanceCollection.create({
+        const newAttendance: Optional<NewAttendance, any> = await this.collection.create({
             id: uuid(),
             profile_id: profileId,
             check_in_time: new Date(),

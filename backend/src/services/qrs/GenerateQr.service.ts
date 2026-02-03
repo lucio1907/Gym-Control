@@ -1,18 +1,17 @@
 import { nanoid } from "nanoid";
 import TemporalQrModel from "../../models/temporalqr.models";
-import { Optional } from "sequelize";
+import { Model, Optional } from "sequelize";
 import { v4 as uuid } from "uuid";
+import { BaseService } from "../BaseService.service";
 
 interface QrInterface {
     token: string
     expires_at: Date
 }
 
-class GenerateQRService {
-  private collection;
-
+class GenerateQRService extends BaseService<Model> {
   constructor() {
-    this.collection = TemporalQrModel;
+    super(TemporalQrModel)
   }
 
   public generateQr = async () => {
