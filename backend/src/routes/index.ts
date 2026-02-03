@@ -4,6 +4,7 @@ import errorHandler from "../middlewares/errorHandler.middleware";
 import qrsRouter from "./qrs/qrs.routes";
 import attendanceRouter from "./attendance/attendance.routes";
 import routinesRouter from "./routines/routines.routes";
+import adminRouter from "./admin/admin.routes";
 
 const routes = Router();
 
@@ -11,6 +12,7 @@ routes.use("/api/profiles", profileRouter);
 routes.use("/api/qrs", qrsRouter);
 routes.use("/api/attendance", attendanceRouter)
 routes.use("/api/routines", routinesRouter);
+routes.use("/api/admins", adminRouter);
 
 routes.use(errorHandler)
 

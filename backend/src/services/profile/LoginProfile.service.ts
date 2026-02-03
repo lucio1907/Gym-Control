@@ -52,6 +52,7 @@ class LoginProfileService {
             name: user.dataValues.name,
             lastname: user.dataValues.lastname,
             email: user.dataValues.email,
+            role: user.dataValues.rol
           },
           session: "active",
         },

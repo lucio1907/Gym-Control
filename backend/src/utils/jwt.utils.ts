@@ -8,7 +8,7 @@ export interface TokenTypes {
   email: string
   phone: string 
   rol: string
-  billing_state: string
+  billing_state?: string
 }
 
 class JwtManagement {
