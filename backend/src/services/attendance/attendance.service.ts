@@ -30,7 +30,7 @@ class AttendanceService extends BaseService<Model> {
         return profile;
     };
 
-    public registerEntry = async (token: string, profileId: string) => {
+    public registerEntry = async (token: string, profileId: string, method: 'QR_SCAN' | 'MANUAL') => {
         const qrRecord = await this.qrCollection.findOne({ where: { token } });
 
         if (!qrRecord) throw new NotFoundException("Invalid QR code");
@@ -50,7 +50,7 @@ class AttendanceService extends BaseService<Model> {
             id: uuid(),
             profile_id: profileId,
             check_in_time: new Date(),
-            method: 'QR_SCAN'
+            method
         })
 
         // Borrar QR escaneado
