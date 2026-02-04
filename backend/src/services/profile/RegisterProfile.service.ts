@@ -5,6 +5,7 @@ import { v4 as uuid } from "uuid";
 import { hashPassword } from "../../utils/hashPassword.utils";
 import calculateBillingDate from "../../utils/billingDate.utils";
 import { BaseService } from "../BaseService.service";
+import { RegisterType } from "../../validators/validators";
 
 interface RegisterBody {
   name: string;
@@ -40,8 +41,6 @@ class RegisterProfile extends BaseService<Model>{
 
   public register = async (body: RegisterBody) => {
     const { name, lastname, email, password, phone, dni } = body;
-
-    if ([name, lastname, email, password, phone, dni].includes("")) throw new BadRequestException("Fields cannot be empty");
 
     const existentUser = await this.checkExistentUser(email);
     if (existentUser) throw new BadRequestException(`User with email ${email} already exists`);

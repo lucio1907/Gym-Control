@@ -2,13 +2,15 @@ import { Router } from "express";
 import checkAdminSession from "../../middlewares/checkAdminSession.middleware";
 import checkSession from "../../middlewares/checkSession.middleware";
 import { createAdmin, deleteAdmin, getAdmins, loginAdmin, updateAdmin } from "../../controllers/admins.controller";
+import validatorMiddleware from "../../middlewares/validatorsMiddleware.middleware";
+import { LoginSchema, RegisterSchema } from "../../validators/validators";
 
 const router = Router();
 
 router.get('/get-admins', checkSession, checkAdminSession, getAdmins);
 
-router.post('/create-admin', checkSession, checkAdminSession, createAdmin);
-router.post('/login-admin', loginAdmin);
+router.post('/create-admin', checkSession, checkAdminSession, validatorMiddleware(RegisterSchema), createAdmin);
+router.post('/login-admin', validatorMiddleware(LoginSchema), loginAdmin);
 
 router.put('/update-admin/:id', checkSession, checkAdminSession, updateAdmin);
 

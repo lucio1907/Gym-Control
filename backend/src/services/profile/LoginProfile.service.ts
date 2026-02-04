@@ -24,9 +24,6 @@ class LoginProfileService extends BaseService<Model> {
   public login = async (body: LoginBody) => {
     const { email, password } = body;
 
-    if ([email, password].includes(""))
-      throw new BadRequestException("Fields cannot be empty");
-
     const user = await this.checkExistentUser(email);
     if (!user) throw new NotFoundException("User not found");
 

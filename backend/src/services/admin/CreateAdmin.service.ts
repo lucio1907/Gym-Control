@@ -32,9 +32,6 @@ class CreateAdminService extends BaseService<Model> {
   public create = async (body: Body) => {
     const { name, lastname, email, password, rol, phone, dni } = body;
 
-    if ([name, lastname, email, password, phone, dni].includes(""))
-      throw new BadRequestException("Fields cannot be empty");
-
     const adminExists = await this.checkAdmin(email);
 
     if (adminExists) throw new BadRequestException("This email is registered");

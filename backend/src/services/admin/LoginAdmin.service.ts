@@ -24,8 +24,6 @@ class LoginAdminService extends BaseService<Model> {
     public login = async (body: Body) => {
         const { email, password } = body;
 
-        if ([email, password].includes("")) throw new BadRequestException('Fields cannot be empty');
-
         const admin = await this.checkAdmin(email, 'admin');
         if (!admin) throw new NotFoundException('Admin not found');
 
