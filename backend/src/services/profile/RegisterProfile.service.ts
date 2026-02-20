@@ -6,6 +6,8 @@ import { hashPassword } from "../../utils/hashPassword.utils";
 import calculateBillingDate from "../../utils/billingDate.utils";
 import { BaseService } from "../BaseService.service";
 import { RegisterType } from "../../validators/validators";
+import emailService from "../emails/email.service";
+import { formatDateDayMonthYear } from "../../utils/formatDate.utils";
 
 interface RegisterBody {
   name: string;
@@ -58,7 +60,17 @@ class RegisterProfile extends BaseService<Model>{
       expiration_day: calculateBillingDate(new Date()),
     };
 
-    await this.collection.create(saveToDB);
+    const newProfile = await this.collection.create(saveToDB);
+
+    await emailService.sendEmail(
+      email,
+      "¡Bienvenido al Gym!",
+      "welcome",
+      {
+        name,
+        expiration_day: formatDateDayMonthYear(newProfile.dataValues.expiration_day)
+      }
+    );
 
     return {
       user: {

@@ -6,6 +6,7 @@ import { v4 as uuid } from "uuid";
 import NotFoundException from "../../errors/NotFoundException";
 import { Routine, RoutineContent } from "../../types/routines.types";
 import { BaseService } from "../BaseService.service";
+import emailService from "../emails/email.service";
 
 interface Body {
     routine_name: string
@@ -46,6 +47,16 @@ class CreateRoutineService extends BaseService<Model> {
         }
 
         await this.collection.create(newRoutine);
+
+        await emailService.sendEmail(
+            profileExists.dataValues.email,
+            "🔥 ¡Tu nueva rutina está lista!",
+            "new_routine",
+            {
+                name: profileExists.dataValues.name,
+                routine_name
+            }
+        )
 
         return newRoutine;
     };
