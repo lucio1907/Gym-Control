@@ -97,6 +97,13 @@ export const getProfileById = async (req: Request, res: Response, next: NextFunc
 export const updateProfile = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const id = req.params.id as string;
+        const requestingUser = (req as any).user;
+
+        // A user can only update their own profile unless they are an admin
+        if (requestingUser.id !== id && requestingUser.rol !== "admin") {
+            return res.status(403).json({ message: "No tenés permiso para modificar este perfil.", status: "Forbidden" });
+        }
+
         const updatedProfile = await updateProfileService.update(id, req.body);
         return res.json({ message: "Profile updated successfully", data: updatedProfile, status: "OK" });
     } catch (error) {

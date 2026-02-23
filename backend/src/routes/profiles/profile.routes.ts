@@ -19,7 +19,7 @@ router.post("/reset-password", validatorMiddleware(ResetPasswordSchema), resetPa
 router.get("/me", checkSession, getMe);
 router.get("/", checkSession, checkAdminSession, getAllProfiles);
 router.get("/:id", checkSession, checkAdminSession, getProfileById);
-router.put("/:id", checkSession, checkAdminSession, updateProfile);
+router.put("/:id", checkSession, updateProfile);
 router.delete("/:id", checkSession, checkAdminSession, deleteProfile);
 
 export default router;
