@@ -18,6 +18,16 @@ class GetProfileService extends BaseService<Model> {
         return profile;
     };
 
+    public getById = async (id: string): Promise<Model> => {
+        const profile = await this.collection.findByPk(id, {
+            attributes: { exclude: ["password", "recovery_token", "recovery_token_expires"] }
+        });
+
+        if (!profile) throw new NotFoundException("Profile not found");
+
+        return profile;
+    };
+
     public getAll = async (): Promise<Model[]> => {
         const profiles = await this.collection.findAll({
             attributes: { exclude: ["password", "recovery_token", "recovery_token_expires"] }

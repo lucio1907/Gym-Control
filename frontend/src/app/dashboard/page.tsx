@@ -15,6 +15,20 @@ export default function StudentDashboardPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
+    const DAYS_ORDER = ["lunes", "martes", "miercoles", "jueves", "viernes", "sabado", "domingo"];
+    const normalize = (s: string) => s.toLowerCase().trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    const sortDays = (daysObj: any) => {
+        if (!daysObj) return [];
+        return Object.keys(daysObj).sort((a, b) => {
+            const indexA = DAYS_ORDER.indexOf(normalize(a));
+            const indexB = DAYS_ORDER.indexOf(normalize(b));
+            if (indexA === -1 && indexB === -1) return a.localeCompare(b);
+            if (indexA === -1) return 1;
+            if (indexB === -1) return -1;
+            return indexA - indexB;
+        });
+    };
+
     useEffect(() => {
         const fetchData = async () => {
             try {
@@ -119,54 +133,90 @@ export default function StudentDashboardPage() {
                 </div>
 
                 <AnimatePresence mode="wait">
-                    {routines.length > 0 ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 xl:gap-8">
-                            {routines.map((routine: any, idx: number) => (
-                                <motion.div
-                                    key={routine.id}
-                                    initial={{ opacity: 0, x: 20 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    transition={{ delay: idx * 0.1 }}
-                                    className="glass rounded-[2rem] p-8 border-white/5 hover:bg-white/[0.02] transition-colors relative overflow-hidden group"
-                                >
-                                    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                                        <Dumbbell className="h-16 w-16" />
+                    {(() => {
+                        const activeRoutine = routines.find((r: any) => r.is_active == true || r.is_active === 1 || r.is_active === "true");
+                        const days = activeRoutine?.routine_content?.days || {};
+                        const dayNames = sortDays(days);
+
+                        // Default to first day if none selected
+                        const currentDay = dayNames[0];
+
+                        if (dayNames.length > 0) {
+                            return (
+                                <div className="space-y-12">
+                                    {/* Day Switcher */}
+                                    <div className="flex flex-wrap gap-3">
+                                        {dayNames.map((day) => (
+                                            <button
+                                                key={day}
+                                                className={cn(
+                                                    "px-8 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all border",
+                                                    "bg-rose-600 text-white border-rose-600 shadow-lg shadow-rose-600/20"
+                                                    // In a real expanded version, we'd have a local state for student's selected day
+                                                )}
+                                            >
+                                                {day}
+                                            </button>
+                                        ))}
                                     </div>
-                                    <div className="flex justify-between items-start mb-6 relative z-10">
-                                        <div className="min-w-0 pr-4">
-                                            <h3 className="text-lg md:text-xl font-black text-rose-600 uppercase italic tracking-tighter leading-none truncate">{routine.exercise}</h3>
-                                            <p className="text-[9px] font-bold text-neutral-500 uppercase tracking-widest mt-3">Objetivo Mensual</p>
+
+                                    {/* Loop through all days to show sections (or could be tabs) */}
+                                    {dayNames.map((day) => (
+                                        <div key={day} className="space-y-8">
+                                            <div className="flex items-center gap-4">
+                                                <h3 className="text-xl font-black font-outfit uppercase italic tracking-tighter text-white/40">{day}</h3>
+                                                <div className="h-px bg-white/5 flex-grow" />
+                                            </div>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 xl:gap-8">
+                                                {days[day].map((exercise: any, idx: number) => (
+                                                    <motion.div
+                                                        key={`${day}-${idx}`}
+                                                        initial={{ opacity: 0, x: 20 }}
+                                                        animate={{ opacity: 1, x: 0 }}
+                                                        transition={{ delay: idx * 0.05 }}
+                                                        className="glass rounded-[2rem] p-8 border-white/5 hover:bg-white/[0.02] transition-colors relative overflow-hidden group"
+                                                    >
+                                                        <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity pointer-events-none">
+                                                            <Dumbbell className="h-16 w-16" />
+                                                        </div>
+                                                        <div className="flex justify-between items-start mb-6 relative z-10">
+                                                            <div className="min-w-0 pr-4">
+                                                                <h3 className="text-lg md:text-xl font-black text-rose-600 uppercase italic tracking-tighter leading-none truncate">{exercise.name}</h3>
+                                                                <p className="text-[9px] font-bold text-neutral-500 uppercase tracking-widest mt-3 whitespace-nowrap">Objetivo Sesión</p>
+                                                            </div>
+                                                            <div className="text-[10px] font-black px-4 py-2 bg-rose-600/10 border border-rose-600/20 rounded-xl text-rose-500 tracking-widest shrink-0">
+                                                                {exercise.sets} X {exercise.reps}
+                                                            </div>
+                                                        </div>
+                                                        <div className="grid grid-cols-1 gap-4 text-[10px] relative z-10">
+                                                            <div className="space-y-1">
+                                                                <p className="text-neutral-500 font-black uppercase tracking-widest">Carga / Notas</p>
+                                                                <p className="text-white font-black text-base md:text-lg font-outfit leading-none">{exercise.weight || '--'}</p>
+                                                            </div>
+                                                        </div>
+                                                    </motion.div>
+                                                ))}
+                                            </div>
                                         </div>
-                                        <div className="text-[10px] font-black px-4 py-2 bg-rose-600/10 border border-rose-600/20 rounded-xl text-rose-500 tracking-widest shrink-0">
-                                            {routine.series} X {routine.reps}
-                                        </div>
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-8 text-[10px] relative z-10">
-                                        <div className="space-y-2">
-                                            <p className="text-neutral-500 font-black uppercase tracking-widest">Descanso</p>
-                                            <p className="text-white font-black text-base md:text-lg font-outfit leading-none">{routine.rest_time}s</p>
-                                        </div>
-                                        <div className="space-y-2">
-                                            <p className="text-neutral-500 font-black uppercase tracking-widest">Carga</p>
-                                            <p className="text-white font-black text-base md:text-lg font-outfit leading-none">{routine.load || '--'} KG</p>
-                                        </div>
-                                    </div>
-                                </motion.div>
-                            ))}
-                        </div>
-                    ) : (
-                        <motion.div
-                            initial={{ opacity: 0, scale: 0.95 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            className="glass-card rounded-[3rem] p-12 md:p-20 border-white/5 flex flex-col items-center justify-center text-center"
-                        >
-                            <div className="p-8 rounded-full bg-neutral-900 border border-white/5 mb-8 shadow-2xl shadow-black ring-1 ring-white/5">
-                                <Dumbbell className="h-10 w-10 md:h-16 md:w-16 text-neutral-800" />
-                            </div>
-                            <h3 className="text-lg md:text-2xl font-black text-white font-outfit uppercase italic tracking-tight leading-none">Sin misiones asignadas</h3>
-                            <p className="text-neutral-500 max-w-sm mt-4 font-medium leading-relaxed text-sm">Aún no se te han asignado rutinas. Consultá con tu instructor.</p>
-                        </motion.div>
-                    )}
+                                    ))}
+                                </div>
+                            );
+                        }
+
+                        return (
+                            <motion.div
+                                initial={{ opacity: 0, scale: 0.95 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                className="glass-card rounded-[3rem] p-12 md:p-20 border-white/5 flex flex-col items-center justify-center text-center w-full"
+                            >
+                                <div className="p-8 rounded-full bg-neutral-900 border border-white/5 mb-8 shadow-2xl shadow-black ring-1 ring-white/5">
+                                    <Dumbbell className="h-10 w-10 md:h-16 md:w-16 text-neutral-800" />
+                                </div>
+                                <h3 className="text-lg md:text-2xl font-black text-white font-outfit uppercase italic tracking-tight leading-none">Sin misiones asignadas</h3>
+                                <p className="text-neutral-500 max-w-sm mt-4 font-medium leading-relaxed text-sm">Aún no se te han asignado rutinas. Consultá con tu instructor.</p>
+                            </motion.div>
+                        );
+                    })()}
                 </AnimatePresence>
             </div>
         </DashboardShell>

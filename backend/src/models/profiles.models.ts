@@ -59,6 +59,8 @@ const ProfileModel = sequelizeConfig.define("profile", {
     type: DataTypes.DATE,
     allowNull: true,
   }
+}, {
+  paranoid: true,
 });
 
 export default ProfileModel;

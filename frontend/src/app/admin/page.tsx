@@ -7,6 +7,9 @@ import { cn } from "@/lib/utils";
 import api from "@/lib/api";
 import { motion } from "framer-motion";
 import DashboardShell from "@/components/DashboardShell";
+import AddStudentModal from "@/components/AddStudentModal";
+import ManualPaymentModal from "@/components/ManualPaymentModal";
+import { supabase } from "@/lib/supabase";
 
 export default function AdminDashboardPage() {
     const router = useRouter();
@@ -15,37 +18,57 @@ export default function AdminDashboardPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const profileRes = await api.get("/profiles/me");
-                const userRole = profileRes.data.data.rol;
+    // Modals state
+    const [isAddStudentOpen, setIsAddStudentOpen] = useState(false);
+    const [isManualPaymentOpen, setIsManualPaymentOpen] = useState(false);
 
-                if (userRole !== "admin") {
-                    router.push("/dashboard");
-                    return;
-                }
-                setProfile(profileRes.data.data);
+    const fetchData = async () => {
+        setIsLoading(true);
+        try {
+            const profileRes = await api.get("/profiles/me");
+            const userRole = profileRes.data.data.rol;
 
-                setStats({
-                    totalRevenue: 245000,
-                    revenueChange: 12.5,
-                    activeStudents: 156,
-                    studentsChange: -2.3,
-                    pendingPayments: 14,
-                    occupancyRate: 78
-                });
-            } catch (err: any) {
-                if (err.response?.status === 401) {
-                    router.push("/");
-                } else {
-                    setError("Error crítico al cargar las métricas de administración.");
-                }
-            } finally {
-                setIsLoading(false);
+            if (userRole !== "admin") {
+                router.push("/dashboard");
+                return;
             }
-        };
+            const statsRes = await api.get("/admins/stats");
+
+            setProfile(profileRes.data.data);
+            setStats(statsRes.data.data);
+        } catch (err: any) {
+            if (err.response?.status === 401) {
+                router.push("/");
+            } else {
+                setError("Error crítico al cargar las métricas de administración.");
+            }
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    useEffect(() => {
         fetchData();
+
+        // Subscribe to real-time changes
+        const profilesChannel = supabase
+            .channel('public:profiles')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, () => {
+                fetchData();
+            })
+            .subscribe();
+
+        const paymentsChannel = supabase
+            .channel('public:payments')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'payments' }, () => {
+                fetchData();
+            })
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(profilesChannel);
+            supabase.removeChannel(paymentsChannel);
+        };
     }, [router]);
 
     if (isLoading) {
@@ -135,12 +158,18 @@ export default function AdminDashboardPage() {
                             Operaciones
                         </h2>
                         <div className="grid grid-cols-1 min-[450px]:grid-cols-2 gap-6 font-outfit uppercase">
-                            <button className="glass rounded-[2rem] p-6 md:p-8 border-white/5 hover:border-rose-500/30 transition-all group text-left">
+                            <button
+                                onClick={() => setIsAddStudentOpen(true)}
+                                className="glass rounded-[2rem] p-6 md:p-8 border-white/5 hover:border-rose-500/30 transition-all group text-left"
+                            >
                                 <Users className="h-8 w-8 text-rose-600 mb-4 group-hover:scale-110 transition-transform" />
                                 <h3 className="text-base md:text-lg font-black tracking-tight mb-2 leading-none">Nuevo Ingreso</h3>
                                 <p className="text-neutral-500 text-[9px] font-bold tracking-[0.2em] leading-relaxed">Registrar un nuevo alumno en la base</p>
                             </button>
-                            <button className="glass rounded-[2rem] p-6 md:p-8 border-white/5 hover:border-green-500/30 transition-all group text-left">
+                            <button
+                                onClick={() => setIsManualPaymentOpen(true)}
+                                className="glass rounded-[2rem] p-6 md:p-8 border-white/5 hover:border-green-500/30 transition-all group text-left"
+                            >
                                 <CreditCard className="h-8 w-8 text-green-500 mb-4 group-hover:scale-110 transition-transform" />
                                 <h3 className="text-base md:text-lg font-black tracking-tight mb-2 leading-none">Cobro Manual</h3>
                                 <p className="text-neutral-500 text-[9px] font-bold tracking-[0.2em] leading-relaxed">Registrar pago fuera de término</p>
@@ -154,23 +183,29 @@ export default function AdminDashboardPage() {
                             <button className="text-[9px] font-black text-rose-500 uppercase tracking-widest hover:text-rose-400">Ver todos</button>
                         </div>
                         <div className="space-y-4">
-                            {[1, 2, 3].map((_, i) => (
-                                <div key={i} className="flex items-center justify-between p-4 rounded-2xl hover:bg-white/[0.02] transition-all border border-transparent hover:border-white/5 group">
-                                    <div className="flex items-center gap-3 md:gap-4 min-w-0">
-                                        <div className="h-10 w-10 md:h-12 md:w-12 rounded-full bg-neutral-900 border border-white/5 flex items-center justify-center font-black text-[10px] text-neutral-400 shrink-0 capitalize">
-                                            {String.fromCharCode(65 + i)}X
+                            {stats?.recentPayments?.length > 0 ? (
+                                stats.recentPayments.map((payment: any, i: number) => (
+                                    <div key={payment.id} className="flex items-center justify-between p-4 rounded-2xl hover:bg-white/[0.02] transition-all border border-transparent hover:border-white/5 group">
+                                        <div className="flex items-center gap-3 md:gap-4 min-w-0">
+                                            <div className="h-10 w-10 md:h-12 md:w-12 rounded-full bg-neutral-900 border border-white/5 flex items-center justify-center font-black text-[10px] text-neutral-400 shrink-0 capitalize italic">
+                                                {payment.studentName.split(' ')[0][0]}{payment.studentName.split(' ').slice(-1)[0][0]}
+                                            </div>
+                                            <div className="min-w-0">
+                                                <p className="text-xs md:text-sm font-black uppercase tracking-tight truncate">{payment.studentName}</p>
+                                                <p className="text-[9px] font-bold text-neutral-500 uppercase tracking-widest truncate mt-1">{payment.concept}</p>
+                                            </div>
                                         </div>
-                                        <div className="min-w-0">
-                                            <p className="text-xs md:text-sm font-black uppercase tracking-tight truncate">Alumno Ejemplo #{i + 1}</p>
-                                            <p className="text-[9px] font-bold text-neutral-500 uppercase tracking-widest truncate mt-1">Plan Mensual</p>
+                                        <div className="text-right shrink-0 pl-4">
+                                            <p className="text-xs md:text-sm font-black text-green-500">+${payment.amount.toLocaleString()}</p>
+                                            <p className="text-[9px] font-bold text-neutral-600 uppercase tracking-widest mt-1">
+                                                {new Date(payment.date).toLocaleDateString()}
+                                            </p>
                                         </div>
                                     </div>
-                                    <div className="text-right shrink-0 pl-4">
-                                        <p className="text-xs md:text-sm font-black text-green-500">+$15.000</p>
-                                        <p className="text-[9px] font-bold text-neutral-600 uppercase tracking-widest mt-1">Hoy</p>
-                                    </div>
-                                </div>
-                            ))}
+                                ))
+                            ) : (
+                                <p className="text-center text-neutral-600 font-bold uppercase tracking-[0.2em] text-[10px] py-12 italic border border-dashed border-white/5 rounded-3xl">Sin ingresos registrados</p>
+                            )}
                         </div>
                     </section>
                 </div>
@@ -184,24 +219,30 @@ export default function AdminDashboardPage() {
                             <div className="space-y-4">
                                 <div className="flex justify-between items-center px-1">
                                     <span className="text-[9px] font-black text-neutral-500 uppercase tracking-widest">Alumnos por Vencer</span>
-                                    <span className="text-[10px] font-black text-rose-500">12 ACTIVAS</span>
+                                    <span className="text-[10px] font-black text-rose-500 underline underline-offset-4 decoration-rose-500/30">{stats?.expiringSoon || 0} ESTA SEMANA</span>
                                 </div>
                                 <div className="h-2 w-full bg-neutral-900 rounded-full overflow-hidden border border-white/5 p-0.5">
-                                    <motion.div initial={{ width: 0 }} animate={{ width: "65%" }} className="h-full bg-rose-600 rounded-full" />
+                                    <motion.div
+                                        initial={{ width: 0 }}
+                                        animate={{ width: `${Math.min(((stats?.expiringSoon || 0) / (stats?.activeStudents || 1)) * 100, 100)}%` }}
+                                        className="h-full bg-rose-600 rounded-full"
+                                    />
                                 </div>
                             </div>
 
                             <div className="pt-8 border-t border-white/5 space-y-6">
                                 <p className="text-[9px] font-black text-neutral-600 uppercase tracking-widest text-center italic">Logs de actividad</p>
                                 <div className="space-y-3">
-                                    <div className="p-4 rounded-xl md:rounded-2xl bg-amber-500/5 border border-amber-500/10">
-                                        <p className="text-[9px] font-black text-amber-500 uppercase tracking-widest mb-1">Backup</p>
-                                        <p className="text-[10px] font-medium text-amber-200/60 leading-tight">Supabase sincronizada.</p>
-                                    </div>
-                                    <div className="p-4 rounded-xl md:rounded-2xl bg-rose-500/5 border border-rose-500/10">
-                                        <p className="text-[9px] font-black text-rose-500 uppercase tracking-widest mb-1">Acceso</p>
-                                        <p className="text-[10px] font-medium text-rose-200/60 leading-tight">Terminal 04 bloqueada.</p>
-                                    </div>
+                                    {stats?.logs?.length > 0 ? (
+                                        stats.logs.map((log: any, i: number) => (
+                                            <div key={i} className={cn("p-4 rounded-xl md:rounded-2xl border transition-all hover:scale-[1.02]", log.bg, log.border)}>
+                                                <p className={cn("text-[9px] font-black uppercase tracking-widest mb-1", log.color)}>{log.type}</p>
+                                                <p className="text-[10px] font-medium text-white/60 leading-tight italic tracking-tight">{log.message}</p>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <p className="text-[9px] text-neutral-700 text-center uppercase tracking-widest py-4">Sin actividad reciente</p>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -209,12 +250,24 @@ export default function AdminDashboardPage() {
 
                     <div className="glass-card rounded-[2rem] md:rounded-[2.5rem] p-8 border-white/5 text-center relative overflow-hidden group">
                         <TrendingUp className="h-10 w-10 text-rose-600 mx-auto mb-4 group-hover:scale-110 transition-transform" />
-                        <h3 className="text-lg font-black font-outfit uppercase italic tracking-tighter shrink-0">Proyección</h3>
-                        <p className="text-3xl font-black text-white mt-1 font-outfit">+18%</p>
-                        <p className="text-[9px] font-bold text-neutral-500 uppercase tracking-widest mt-2 leading-tight">Comparado vs mes anterior</p>
+                        <h3 className="text-lg font-black font-outfit uppercase italic tracking-tighter shrink-0">Cobro Mensual</h3>
+                        <p className="text-3xl font-black text-white mt-1 font-outfit">{stats?.projection || 0}%</p>
+                        <p className="text-[9px] font-bold text-neutral-500 uppercase tracking-widest mt-2 leading-tight">Progreso vs recaudación bruta esperada</p>
                     </div>
                 </div>
             </div>
+
+            <AddStudentModal
+                isOpen={isAddStudentOpen}
+                onClose={() => setIsAddStudentOpen(false)}
+                onSuccess={fetchData}
+            />
+
+            <ManualPaymentModal
+                isOpen={isManualPaymentOpen}
+                onClose={() => setIsManualPaymentOpen(false)}
+                onSuccess={fetchData}
+            />
         </DashboardShell>
     );
 }

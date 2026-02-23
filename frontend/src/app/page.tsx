@@ -37,7 +37,12 @@ export default function LoginPage() {
       const response = await api.post("/profiles/login", { email, password });
 
       if (response.data.status === "OK") {
-        router.push("/dashboard");
+        const role = response.data.user.credentials.role;
+        if (role === "admin") {
+          router.push("/admin");
+        } else {
+          router.push("/dashboard");
+        }
       }
     } catch (err: any) {
       setError(err.response?.data?.message || "Credenciales inválidas. Revisá tu mail y contraseña.");

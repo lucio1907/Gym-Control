@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { forgotPassword, getAllProfiles, getMe, loginProfile, logoutProfile, registerProfile, resetPassword } from "../../controllers/profiles.controller";
+import { deleteProfile, forgotPassword, getAllProfiles, getMe, loginProfile, logoutProfile, registerProfile, resetPassword, updateProfile, getProfileById } from "../../controllers/profiles.controller";
 import { ForgotPasswordSchema, LoginSchema, RegisterSchema, ResetPasswordSchema } from "../../validators/validators";
 import validatorMiddleware from "../../middlewares/validatorsMiddleware.middleware";
 import checkSession from "../../middlewares/checkSession.middleware";
@@ -16,5 +16,8 @@ router.post("/reset-password", validatorMiddleware(ResetPasswordSchema), resetPa
 
 router.get("/me", checkSession, getMe);
 router.get("/", checkSession, checkAdminSession, getAllProfiles);
+router.get("/:id", checkSession, checkAdminSession, getProfileById);
+router.put("/:id", checkSession, checkAdminSession, updateProfile);
+router.delete("/:id", checkSession, checkAdminSession, deleteProfile);
 
 export default router;

@@ -4,6 +4,7 @@ import loginAdminService from "../services/admin/LoginAdmin.service";
 import updateAdminService from "../services/admin/UpdateAdmin.service";
 import deleteAdminService from "../services/admin/DeleteAdmin.service";
 import getAdminsService from "../services/admin/GetAdmins.service";
+import getStatsService from "../services/admin/GetStats.service";
 
 export const createAdmin = async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -53,6 +54,15 @@ export const getAdmins = async (req: Request, res: Response, next: NextFunction)
     try {
         const admin = await getAdminsService.get();
         return res.json({ message: 'Admins info', data: admin, status: 'OK' })
+    } catch (error) {
+        next(error);
+    }
+}
+
+export const getDashboardStats = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const stats = await getStatsService.getDashboardStats();
+        return res.json({ message: 'Dashboard statistics', data: stats, status: 'OK' });
     } catch (error) {
         next(error);
     }

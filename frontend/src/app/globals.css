@@ -81,3 +81,7 @@ h1, h2, h3, h4 {
   font-style: italic;
   letter-spacing: var(--tracking-tighter, -0.05em);
 }
+
+button {
+  cursor: pointer;
+}

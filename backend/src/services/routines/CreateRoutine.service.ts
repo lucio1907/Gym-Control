@@ -18,8 +18,14 @@ class CreateRoutineService extends BaseService<Model> {
         super(RoutinesModel)
     }
 
-    private checkIfExists = async (routineName: string): Promise<Model | null> => {
-        const exists = await this.collection.findOne({ where: { routine_name: routineName } });
+    private checkIfExists = async (routineName: string, profile_id: string): Promise<Model | null> => {
+        const exists = await this.collection.findOne({ 
+            where: { 
+                routine_name: routineName,
+                profile_id: profile_id,
+                is_active: true // Only check if an ACTIVE one exists with this name
+            } 
+        });
         return exists;
     };
 
@@ -36,27 +42,24 @@ class CreateRoutineService extends BaseService<Model> {
         const profileExists = await this.checkIfProfileExists(profile_id);
         if (!profileExists) throw new NotFoundException('Profile not found');
 
-        const existentRoutine = await this.checkIfExists(routine_name);
-        if (existentRoutine) throw new BadRequestException('You already have a routine with this name');
+        // Deactivate all existing routines for this student to ensure only ONE is active
+        await this.collection.update(
+            { is_active: false },
+            { where: { profile_id } }
+        );
+
+        const existentRoutine = await this.checkIfExists(routine_name, profile_id);
+        if (existentRoutine) throw new BadRequestException('You already have a routine with this name for this student');
 
         const newRoutine: Optional<Routine, any> = {
             id: uuid(),
             profile_id,
             routine_name,
-            routine_content 
+            routine_content,
+            is_active: true
         }
 
         await this.collection.create(newRoutine);
-
-        await emailService.sendEmail(
-            profileExists.dataValues.email,
-            "🔥 ¡Tu nueva rutina está lista!",
-            "new_routine",
-            {
-                name: profileExists.dataValues.name,
-                routine_name
-            }
-        )
 
         return newRoutine;
     };

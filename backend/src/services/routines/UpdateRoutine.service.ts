@@ -16,9 +16,13 @@ class UpdateRoutineService extends BaseService<Model>{
         super(RoutinesModel);
     }
 
-    private checkDuplicateName = async (name: string, currentId: string): Promise<boolean> => {
+    private checkDuplicateName = async (name: string, profile_id: string, currentId: string): Promise<boolean> => {
         const exists = await this.collection.findOne({ 
-            where: { routine_name: name } 
+            where: { 
+                routine_name: name,
+                profile_id: profile_id,
+                is_active: true
+            } 
         });
         // Es duplicado solo si el ID es distinto al que estamos editando
         return exists !== null && (exists as any).id !== currentId;
@@ -31,16 +35,18 @@ class UpdateRoutineService extends BaseService<Model>{
         const routine = await this.collection.findByPk(id);
         if (!routine) throw new NotFoundException('Routine not found');
 
-        // 2. Validar que el nuevo nombre no esté ocupado por OTRA rutina
+        // 2. Validar que el nuevo nombre no esté ocupado por OTRA rutina del mismo alumno
         if (routine_name) {
-            const isDuplicate = await this.checkDuplicateName(routine_name, id);
-            if (isDuplicate) throw new BadRequestException('Routine name already in use by another profile');
+            const profile_id = routine.get('profile_id') as string;
+            const isDuplicate = await this.checkDuplicateName(routine_name, profile_id, id);
+            if (isDuplicate) throw new BadRequestException('Ya existe una rutina con ese nombre para este alumno.');
         }
 
         // 3. Aplicar cambios
         await routine.update({
             routine_name: routine_name ?? routine.get('routine_name'),
-            routine_content: routine_content ?? routine.get('routine_content')
+            routine_content: routine_content ?? routine.get('routine_content'),
+            is_active: body.is_active !== undefined ? body.is_active : routine.get('is_active')
         });
 
         return routine;

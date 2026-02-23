@@ -7,26 +7,70 @@ import api from "@/lib/api";
 import { Dumbbell, Search, UserPlus, Edit2, Trash2, Filter, ChevronLeft, ChevronRight, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/lib/supabase";
+import AddStudentModal from "@/components/AddStudentModal";
+import DeleteConfirmationModal from "@/components/DeleteConfirmationModal";
 
 export default function AdminStudentsPage() {
     const router = useRouter();
     const [students, setStudents] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [search, setSearch] = useState("");
+    const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+    const [studentToEdit, setStudentToEdit] = useState<any | null>(null);
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [studentToDelete, setStudentToDelete] = useState<any | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
+
+    const fetchStudents = async () => {
+        try {
+            const res = await api.get("/profiles");
+            // Backend uses 'user' role for students
+            setStudents(res.data.data.filter((p: any) => p.rol === "user"));
+        } catch (err) {
+            console.error("Error fetching students", err);
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     useEffect(() => {
-        const fetchStudents = async () => {
-            try {
-                const res = await api.get("/profiles");
-                setStudents(res.data.data.filter((p: any) => p.role === "STUDENT"));
-            } catch (err) {
-                console.error("Error fetching students");
-            } finally {
-                setIsLoading(false);
-            }
-        };
         fetchStudents();
+
+        // Subscribe to real-time changes
+        const profilesChannel = supabase
+            .channel('public:profiles_list')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, () => {
+                fetchStudents();
+            })
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(profilesChannel);
+        };
     }, []);
+
+    const handleDeleteClick = (student: any) => {
+        setStudentToDelete(student);
+        setIsDeleteModalOpen(true);
+    };
+
+    const confirmDelete = async () => {
+        if (!studentToDelete) return;
+
+        setIsDeleting(true);
+        try {
+            await api.delete(`/profiles/${studentToDelete.id}`);
+            // List will auto-update via Supabase Realtime
+            setIsDeleteModalOpen(false);
+            setStudentToDelete(null);
+        } catch (err) {
+            console.error("Error deleting student", err);
+            alert("Error al eliminar el alumno.");
+        } finally {
+            setIsDeleting(false);
+        }
+    };
 
     const filteredStudents = students.filter(s =>
         s.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -48,7 +92,10 @@ export default function AdminStudentsPage() {
                     <p className="text-neutral-500 font-bold tracking-[0.2em] uppercase text-[9px] md:text-[10px]">Gestión centralizada de perfiles y rutinas</p>
                 </div>
 
-                <button className="btn-premium px-8 py-4 text-[10px] tracking-[0.2em] flex items-center gap-4 shrink-0">
+                <button
+                    onClick={() => setIsAddModalOpen(true)}
+                    className="btn-premium px-8 py-4 text-[10px] tracking-[0.2em] flex items-center gap-4 shrink-0"
+                >
                     <UserPlus className="h-5 w-5" />
                     NUEVO ALUMNO
                 </button>
@@ -112,14 +159,21 @@ export default function AdminStudentsPage() {
                                         <td className="px-6 py-6 whitespace-nowrap">
                                             <p className="text-xs md:text-sm font-black font-outfit text-neutral-300">{student.dni}</p>
                                         </td>
-                                        <td className="px-6 py-6">
-                                            <div className={cn(
-                                                "inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border shrink-0",
-                                                student.billing_state === "OK" ? "bg-green-500/10 text-green-500 border-green-500/20" : "bg-amber-500/10 text-amber-500 border-amber-500/20"
-                                            )}>
-                                                {student.billing_state === "OK" ? <CheckCircle2 className="h-2.5 w-2.5" /> : <AlertCircle className="h-2.5 w-2.5" />}
-                                                {student.billing_state === "OK" ? "Vigente" : "Pendiente"}
-                                            </div>
+                                        <td className="px-6 py-6 font-outfit">
+                                            {(() => {
+                                                const isExpired = new Date(student.expiration_day) < new Date();
+                                                const isPending = student.billing_state !== "OK" || isExpired;
+
+                                                return (
+                                                    <div className={cn(
+                                                        "inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border shrink-0",
+                                                        !isPending ? "bg-green-500/10 text-green-500 border-green-500/20" : "bg-amber-500/10 text-amber-500 border-amber-500/20"
+                                                    )}>
+                                                        {!isPending ? <CheckCircle2 className="h-2.5 w-2.5" /> : <AlertCircle className="h-2.5 w-2.5" />}
+                                                        {!isPending ? "Vigente" : isExpired ? "Vencido" : "Pendiente"}
+                                                    </div>
+                                                );
+                                            })()}
                                         </td>
                                         <td className="px-8 py-6 text-right">
                                             <div className="flex items-center justify-end gap-2 md:gap-3 transition-all">
@@ -130,8 +184,22 @@ export default function AdminStudentsPage() {
                                                 >
                                                     <Dumbbell className="h-4 w-4" />
                                                 </button>
-                                                <button className="p-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 text-neutral-500 hover:text-white transition-all shrink-0" title="Editar">
+                                                <button
+                                                    onClick={() => {
+                                                        setStudentToEdit(student);
+                                                        setIsAddModalOpen(true);
+                                                    }}
+                                                    className="p-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 text-neutral-500 hover:text-white transition-all shrink-0"
+                                                    title="Editar"
+                                                >
                                                     <Edit2 className="h-4 w-4" />
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDeleteClick(student)}
+                                                    className="p-3 rounded-xl bg-white/5 hover:bg-rose-600/10 border border-white/5 hover:border-rose-600/20 text-neutral-500 hover:text-rose-500 transition-all shrink-0"
+                                                    title="Eliminar"
+                                                >
+                                                    <Trash2 className="h-4 w-4" />
                                                 </button>
                                             </div>
                                         </td>
@@ -160,6 +228,28 @@ export default function AdminStudentsPage() {
                     </div>
                 </div>
             </div>
+
+            <AddStudentModal
+                isOpen={isAddModalOpen}
+                onClose={() => {
+                    setIsAddModalOpen(false);
+                    setStudentToEdit(null);
+                }}
+                onSuccess={fetchStudents}
+                student={studentToEdit}
+            />
+
+            <DeleteConfirmationModal
+                isOpen={isDeleteModalOpen}
+                onClose={() => {
+                    setIsDeleteModalOpen(false);
+                    setStudentToDelete(null);
+                }}
+                onConfirm={confirmDelete}
+                isLoading={isDeleting}
+                title="Eliminar Alumno"
+                message={`¿Estás seguro de que deseas eliminar a ${studentToDelete?.name} ${studentToDelete?.lastname}? Esta acción limpiará su perfil y historial definitivamente.`}
+            />
         </DashboardShell>
     );
 }
