@@ -59,6 +59,19 @@ export const getMe = async (req: Request, res: Response, next: NextFunction) => 
     }
 };
 
+export const logoutProfile = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        res.clearCookie("access_token", {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: 'strict'
+        });
+        return res.json({ message: "Logged out successfully", status: "OK" });
+    } catch (error) {
+        next(error);
+    }
+};
+
 export const getAllProfiles = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const profiles = await getProfileService.getAll();

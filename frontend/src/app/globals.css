@@ -1,0 +1,83 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-background: #050505;
+  --color-foreground: #ffffff;
+  --color-primary: #e11d48;
+  --color-primary-foreground: #ffffff;
+  --color-card: rgba(10, 10, 10, 0.8);
+  --color-border: rgba(255, 255, 255, 0.1);
+
+  /* Define theme fonts */
+  --font-inter: var(--font-inter);
+  --font-outfit: var(--font-outfit);
+}
+
+:root {
+  --background: #050505;
+  --foreground: #ffffff;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-inter), system-ui, sans-serif;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+@layer utilities {
+  .glass {
+    background: rgba(10, 10, 10, 0.6);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .glass-card {
+    background: rgba(15, 15, 15, 0.35);
+    backdrop-filter: blur(24px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 20px 50px -12px rgba(0, 0, 0, 0.7);
+  }
+
+  .text-glow {
+    text-shadow: 0 0 20px rgba(225, 29, 72, 0.4);
+  }
+
+  .btn-premium {
+    @apply bg-rose-600 hover:bg-rose-700 text-white font-black rounded-2xl 
+    transition-all duration-500 shadow-[0_10px_30px_rgba(225,29,72,0.2)] 
+    active:scale-95 flex items-center justify-center gap-3 uppercase tracking-[0.2em] italic;
+  }
+
+  .input-premium {
+    @apply bg-white/[0.03] border border-white/10 text-white rounded-2xl 
+    focus:ring-2 focus:ring-rose-500/30 focus:border-rose-500 outline-none 
+    py-4 px-10 w-full transition-all placeholder:text-neutral-700 font-medium;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(225, 29, 72, 0.3);
+  }
+}
+
+/* Base Headings Polish */
+h1, h2, h3, h4 {
+  font-family: var(--font-outfit), sans-serif;
+  text-transform: uppercase;
+  font-style: italic;
+  letter-spacing: var(--tracking-tighter, -0.05em);
+}
