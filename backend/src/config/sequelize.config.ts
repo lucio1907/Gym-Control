@@ -10,6 +10,12 @@ const sequelizeConfig = new Sequelize(
     port: parseInt(configServer.database.port),
     dialect: "postgres",
     logging: false,
+    dialectOptions: {
+      ssl: {
+        require: true,
+        rejectUnauthorized: false,
+      },
+    },
   }
 );
 
