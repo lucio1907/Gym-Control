@@ -1,6 +1,8 @@
 import { NextFunction, Request, Response } from "express";
 import registerProfileService from "../services/profile/RegisterProfile.service";
 import loginProfileService from "../services/profile/LoginProfile.service";
+import forgotPasswordService from "../services/profile/ForgotPassword.service";
+import resetPasswordService from "../services/profile/ResetPassword.service";
 
 export const registerProfile = async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -23,6 +25,24 @@ export const loginProfile = async (req: Request, res: Response, next: NextFuncti
         })
 
         return res.json({ message: 'User logged in', token: authUser?.access_token, user: authUser?.user, status: "OK" })
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const forgotPassword = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const result = await forgotPasswordService.forgotPassword(req.body.email);
+        return res.json(result);
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const resetPassword = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const result = await resetPasswordService.resetPassword(req.body);
+        return res.json(result);
     } catch (error) {
         next(error);
     }

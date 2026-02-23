@@ -50,6 +50,14 @@ const ProfileModel = sequelizeConfig.define("profile", {
     type: DataTypes.DECIMAL,
     allowNull: false,
     defaultValue: 0
+  },
+  recovery_token: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
+  recovery_token_expires: {
+    type: DataTypes.DATE,
+    allowNull: true,
   }
 });
 
