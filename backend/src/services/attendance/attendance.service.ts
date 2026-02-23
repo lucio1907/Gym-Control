@@ -67,6 +67,18 @@ class AttendanceService extends BaseService<Model> {
         }
     };
 
+    public getHistory = async (profileId?: string): Promise<Model[]> => {
+        const where: any = {};
+        if (profileId) where.profile_id = profileId;
+
+        const history = await this.collection.findAll({
+            where,
+            order: [["check_in_time", "DESC"]]
+        });
+
+        return history;
+    };
+
 }
 
 const attendanceService = new AttendanceService();

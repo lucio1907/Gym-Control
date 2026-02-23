@@ -14,3 +14,13 @@ export const checkIn = async (req: Request, res: Response, next: NextFunction) =
         next(error);        
     }
 };
+
+export const getAttendanceHistory = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const profileId = (req as any).user.rol === 'admin' ? req.query.profileId as string : (req as any).user.id;
+        const history = await attendanceService.getHistory(profileId);
+        return res.json({ message: "Attendance history info", data: history, status: "OK" });
+    } catch (error) {
+        next(error);
+    }
+};

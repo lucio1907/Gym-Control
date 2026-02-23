@@ -3,6 +3,7 @@ import registerProfileService from "../services/profile/RegisterProfile.service"
 import loginProfileService from "../services/profile/LoginProfile.service";
 import forgotPasswordService from "../services/profile/ForgotPassword.service";
 import resetPasswordService from "../services/profile/ResetPassword.service";
+import getProfileService from "../services/profile/GetProfile.service";
 
 export const registerProfile = async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -43,6 +44,25 @@ export const resetPassword = async (req: Request, res: Response, next: NextFunct
     try {
         const result = await resetPasswordService.resetPassword(req.body);
         return res.json(result);
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const getMe = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const userId = (req as any).user.id;
+        const profile = await getProfileService.getMe(userId);
+        return res.json({ message: "User profile info", data: profile, status: "OK" });
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const getAllProfiles = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const profiles = await getProfileService.getAll();
+        return res.json({ message: "All profiles info", data: profiles, status: "OK" });
     } catch (error) {
         next(error);
     }

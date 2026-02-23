@@ -2,6 +2,7 @@ import { NextFunction, Request, Response } from "express";
 import createRoutineService from "../services/routines/CreateRoutine.service";
 import deleteRoutineService from "../services/routines/DeleteRoutine.service";
 import updateRoutineService from "../services/routines/UpdateRoutine.service";
+import getRoutinesService from "../services/routines/GetRoutines.service";
 
 export const createRoutine = async (req: Request, res: Response, next: NextFunction) => {
     const profile_id = req.params.profile_id as string;
@@ -28,6 +29,16 @@ export const deleteRoutine = async (req: Request, res: Response, next: NextFunct
     try {
         await deleteRoutineService.delete(id);
         return res.json({ message: "Routine deleted!", routine_id: id, status: "OK" });
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const getRoutinesByProfile = async (req: Request, res: Response, next: NextFunction) => {
+    const profile_id = req.params.profile_id as string;
+    try {
+        const routines = await getRoutinesService.getByProfileId(profile_id);
+        return res.json({ message: "Profile routines info", data: routines, status: "OK" });
     } catch (error) {
         next(error);
     }
