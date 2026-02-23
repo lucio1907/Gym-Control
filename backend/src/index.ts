@@ -6,7 +6,7 @@ import cronService from "./services/cron/Cron.service";
 
 const main = async (): Promise<void> => {
   try {
-    await sequelizeConfig.sync({ force: false, alter: true });
+    await sequelizeConfig.sync({ force: false, alter: false });
     cronService.init(); // Starts the daily cron jobs
     const PORT: number = configServer.server.port as number;
 
