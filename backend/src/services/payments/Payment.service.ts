@@ -51,6 +51,13 @@ class PaymentService extends BaseService<Model> {
 
         return await this.collection.findAll({
             where,
+            include: [
+                {
+                    model: ProfileModel,
+                    as: "profile",
+                    attributes: ["name", "lastname", "dni", "email"]
+                }
+            ],
             order: [["payment_date", "DESC"]]
         });
     };

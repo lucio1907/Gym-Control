@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            width: 100% !important;
+            -webkit-text-size-adjust: 100%;
+            -ms-text-size-adjust: 100%;
+        }
+
+        img {
+            border: 0;
+            height: auto;
+            line-height: 100%;
+            outline: none;
+            text-decoration: none;
+        }
+
+        table {
+            border-collapse: collapse !important;
+        }
+    </style>
+</head>
+
+<body
+    style="background-color: #f6f6f6; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; margin: 0; padding: 0;">
+    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+        <tr>
+            <td align="center" style="padding: 40px 0;">
+                <table border="0" cellpadding="0" cellspacing="0" width="600"
+                    style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border-top: 4px solid #ff4444;">
+                    <tr>
+                        <td align="center" style="background-color: #1a1a1a; padding: 30px 20px;">
+                            <h1
+                                style="color: #ffffff; font-size: 28px; font-weight: 800; letter-spacing: -1px; margin: 0; text-transform: uppercase;">
+                                GYM<span style="color: #ff4444;">CONTROL</span>
+                            </h1>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 40px 40px 30px 40px;">
+                            <h2 style="color: #1a1a1a; font-size: 22px; font-weight: 700; margin-top: 0;">
+                                ¡Hola, {{name}}! ⚠️
+                            </h2>
+                            <p
+                                style="color: #1a1a1a; font-size: 16px; line-height: 1.6; margin-bottom: 25px; font-weight: bold;">
+                                Te contactamos para informarte que tu cuota de {{gym_name}} ha <span
+                                    style="color: #ff4444;">vencido</span>.
+                            </p>
+
+                            <table border="0" cellpadding="0" cellspacing="0" width="100%"
+                                style="background-color: #fff0f0; border-left: 4px solid #ff4444; border-radius: 4px;">
+                                <tr>
+                                    <td style="padding: 20px;">
+                                        <p
+                                            style="color: #ff4444; font-size: 14px; margin: 0; text-transform: uppercase; font-weight: bold; letter-spacing: 1px;">
+                                            Acceso Suspendido
+                                        </p>
+                                        <p
+                                            style="color: #555555; font-size: 15px; margin: 5px 0 0 0; line-height: 1.5;">
+                                            El sistema te ha marcado como <strong>vencido</strong>. Esto significa que
+                                            temporalmente no podrás ver tu rutina activa ni ingresar con tu código QR.
+                                        </p>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <p
+                                style="color: #555555; font-size: 16px; line-height: 1.6; margin-bottom: 25px; margin-top: 25px;">
+                                Para recuperar el acceso normal a las instalaciones y a tu plan de entrenamiento, por
+                                favor acercate al mostrador principal para regularizar tu situación.
+                            </p>
+
+                            <p
+                                style="color: #888888; font-size: 13px; line-height: 1.6; margin-bottom: 0; margin-top: 25px; border-top: 1px solid #eeeeee; padding-top: 20px;">
+                                Si ya realizaste el pago en las últimas horas, por favor comunicate con la recepción
+                                para que asienten tu cobro.
+                            </p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td
+                            style="background-color: #f9f9f9; color: #aaaaaa; font-size: 12px; padding: 30px 40px; text-align: center;">
+                            <p style="margin: 0 0 10px 0;">
+                                {{gym_name}}
+                            </p>
+                            <p style="margin: 0;">
+                                Mensaje automático del sistema de gestión.
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+
+</html>

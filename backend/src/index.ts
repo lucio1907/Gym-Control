@@ -2,10 +2,12 @@ import app from "./app";
 import configServer from "./config/configServer.config";
 import sequelizeConfig from "./config/sequelize.config";
 import "./models/associations";
+import cronService from "./services/cron/Cron.service";
 
 const main = async (): Promise<void> => {
   try {
     await sequelizeConfig.sync({ force: false, alter: true });
+    cronService.init(); // Starts the daily cron jobs
     const PORT: number = configServer.server.port as number;
 
     app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

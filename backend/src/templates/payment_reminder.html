@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <style>
+        /* Estilos básicos para evitar que los clientes de correo rompan el diseño */
+        body {
+            margin: 0;
+            padding: 0;
+            width: 100% !important;
+            -webkit-text-size-adjust: 100%;
+            -ms-text-size-adjust: 100%;
+        }
+
+        img {
+            border: 0;
+            height: auto;
+            line-height: 100%;
+            outline: none;
+            text-decoration: none;
+        }
+
+        table {
+            border-collapse: collapse !important;
+        }
+    </style>
+</head>
+
+<body
+    style="background-color: #f6f6f6; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; margin: 0; padding: 0;">
+    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+        <tr>
+            <td align="center" style="padding: 40px 0;">
+                <table border="0" cellpadding="0" cellspacing="0" width="600"
+                    style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+                    <tr>
+                        <td align="center" style="background-color: #1a1a1a; padding: 30px 20px;">
+                            <h1
+                                style="color: #ffffff; font-size: 28px; font-weight: 800; letter-spacing: -1px; margin: 0; text-transform: uppercase;">
+                                GYM<span style="color: #ff4444;">CONTROL</span>
+                            </h1>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 40px 40px 30px 40px;">
+                            <h2 style="color: #1a1a1a; font-size: 22px; font-weight: 700; margin-top: 0;">
+                                ¡Hola, {{name}}! 👋
+                            </h2>
+                            <p style="color: #555555; font-size: 16px; line-height: 1.6; margin-bottom: 25px;">
+                                Te escribimos desde <strong>{{gym_name}}</strong> para recordarte que tu cuota vencerá
+                                en <strong>3 días</strong>.
+                            </p>
+
+                            <table border="0" cellpadding="0" cellspacing="0" width="100%"
+                                style="background-color: #f9f9f9; border-left: 4px solid #ff4444; border-radius: 4px;">
+                                <tr>
+                                    <td style="padding: 20px;">
+                                        <p
+                                            style="color: #1a1a1a; font-size: 14px; margin: 0; text-transform: uppercase; font-weight: bold; letter-spacing: 1px;">
+                                            Valor Actual de Cuota
+                                        </p>
+                                        <p style="color: #555555; font-size: 22px; margin: 5px 0 0 0;">
+                                            <strong>{{currency}}{{amount}}</strong>
+                                        </p>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <p
+                                style="color: #555555; font-size: 16px; line-height: 1.6; margin-bottom: 25px; margin-top: 25px;">
+                                Para evitar la suspensión del acceso e interrupciones en tus entrenamientos, por favor
+                                acercate al gimnasio a renovar tu abono.
+                            </p>
+
+                            <p
+                                style="color: #888888; font-size: 13px; line-height: 1.6; margin-bottom: 0; margin-top: 25px; border-top: 1px solid #eeeeee; padding-top: 20px;">
+                                Si ya realizaste el pago en las últimas 24 horas, por favor desestimá este mensaje.
+                            </p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td
+                            style="background-color: #f9f9f9; color: #aaaaaa; font-size: 12px; padding: 30px 40px; text-align: center;">
+                            <p style="margin: 0 0 10px 0;">
+                                {{gym_name}}
+                            </p>
+                            <p style="margin: 0;">
+                                Recibiste este correo porque sos alumno activo de nuestra sede.
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+
+</html>

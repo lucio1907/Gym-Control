@@ -2,6 +2,7 @@ import ProfileModel from "./profiles.models";
 import PaymentsModel from "./payments.models";
 import AttendanceModel from "./attendance.models";
 import RoutinesModel from "./routines.models";
+import SettingsModel from "./settings.models";
 
 // Profile has many Payments
 ProfileModel.hasMany(PaymentsModel, {

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Dumbbell, CreditCard, Users, TrendingUp, ArrowUpRight, ArrowDownRight, Activity, Calendar, Loader2, AlertCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { cn } from "@/lib/utils";
 import api from "@/lib/api";
 import { motion } from "framer-motion";
@@ -180,7 +181,7 @@ export default function AdminDashboardPage() {
                     <section className="glass-card rounded-[2.5rem] md:rounded-[3rem] p-6 md:p-10 border-white/5">
                         <div className="flex items-center justify-between mb-10 text-white">
                             <h3 className="text-lg md:text-xl font-black font-outfit uppercase tracking-tighter italic leading-none">Ingresos Recientes</h3>
-                            <button className="text-[9px] font-black text-rose-500 uppercase tracking-widest hover:text-rose-400">Ver todos</button>
+                            <Link href="/admin/payments" className="text-[9px] font-black text-rose-500 uppercase tracking-widest hover:text-rose-400">Ver todos</Link>
                         </div>
                         <div className="space-y-4">
                             {stats?.recentPayments?.length > 0 ? (

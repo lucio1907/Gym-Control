@@ -6,6 +6,7 @@ import resetPasswordService from "../services/profile/ResetPassword.service";
 import getProfileService from "../services/profile/GetProfile.service";
 import updateProfileService from "../services/profile/UpdateProfile.service";
 import deleteProfileService from "../services/profile/DeleteProfile.service";
+import changePasswordService from "../services/profile/ChangePassword.service";
 
 export const registerProfile = async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -108,6 +109,16 @@ export const deleteProfile = async (req: Request, res: Response, next: NextFunct
         const id = req.params.id as string;
         await deleteProfileService.delete(id);
         return res.json({ message: "Profile deleted successfully", status: "OK" });
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const changePassword = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const id = (req as any).user.id;
+        await changePasswordService.changePassword(id, req.body);
+        return res.json({ message: "Password updated successfully", status: "OK" });
     } catch (error) {
         next(error);
     }
