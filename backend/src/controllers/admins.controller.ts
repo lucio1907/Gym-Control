@@ -22,7 +22,7 @@ export const loginAdmin = async (req: Request, res: Response, next: NextFunction
         res.cookie("access_token", admin?.access_token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",
-            sameSite: 'strict',
+            sameSite: process.env.NODE_ENV === "production" ? 'none' : 'strict',
             maxAge: 1000 * 60 * 60 * 24 * 7
         });
 

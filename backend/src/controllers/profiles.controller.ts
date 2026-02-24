@@ -24,7 +24,7 @@ export const loginProfile = async (req: Request, res: Response, next: NextFuncti
         res.cookie("access_token", authUser?.access_token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",
-            sameSite: 'strict',
+            sameSite: process.env.NODE_ENV === "production" ? 'none' : 'strict',
             maxAge: 1000 * 60 * 60 * 24 * 7
         })
 
@@ -67,7 +67,7 @@ export const logoutProfile = async (req: Request, res: Response, next: NextFunct
         res.clearCookie("access_token", {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",
-            sameSite: 'strict'
+            sameSite: process.env.NODE_ENV === "production" ? 'none' : 'strict'
         });
         return res.json({ message: "Logged out successfully", status: "OK" });
     } catch (error) {
