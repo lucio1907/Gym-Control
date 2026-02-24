@@ -20,6 +20,7 @@ export default function StudentDashboardPage() {
     const [scanMessage, setScanMessage] = useState<string | null>(null);
 
     const scannerRef = useRef<Html5Qrcode | null>(null);
+    const isProcessing = useRef(false);
     const SCANNER_ID = "dashboard-qr-scanner";
 
     const DAYS_ORDER = ["lunes", "martes", "miercoles", "jueves", "viernes", "sabado", "domingo"];
@@ -98,6 +99,14 @@ export default function StudentDashboardPage() {
     }, [isScanning]);
 
     const handleScanSuccess = async (token: string) => {
+        if (isProcessing.current) return;
+        isProcessing.current = true;
+
+        // Stop scanner immediately to prevent multiple triggers
+        if (scannerRef.current?.isScanning) {
+            await scannerRef.current.stop().catch(console.error);
+        }
+
         setScanStatus('loading');
         try {
             const response = await api.post(`/attendance/check-in/QR_SCAN`, { qrToken: token });
@@ -107,10 +116,12 @@ export default function StudentDashboardPage() {
                 setTimeout(() => {
                     setIsScanning(false);
                     setScanStatus('idle');
+                    isProcessing.current = false;
                     window.location.reload(); // Refresh to see updated marked_days
                 }, 3000);
             }
         } catch (err: any) {
+            isProcessing.current = false;
             setScanStatus('error');
             setScanMessage(err.response?.data?.message || err.message || "Código inválido o expirado.");
             setTimeout(() => setScanStatus('idle'), 4000);

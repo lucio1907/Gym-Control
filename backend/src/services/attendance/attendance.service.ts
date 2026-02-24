@@ -38,11 +38,25 @@ class AttendanceService extends BaseService<Model> {
         if (new Date() > qrRecord.dataValues.expires_at) throw new BadRequestException('El código QR expiró');
 
         // Check if it's an entrance QR or a user QR
-        // If it's a user QR, the profile_id in the QR must match the session (old flow)
-        // If it's an ENTRANCE QR, we just use the session's profileId (new flow)
         const isEntranceQr = qrRecord.dataValues.profile_id === 'GYM_ENTRANCE' || token.startsWith('ENTRANCE_');
         
         const finalProfileId = isEntranceQr ? profileId : qrRecord.dataValues.profile_id;
+
+        // Anti-spam: Check for recent attendance in the last 2 minutes
+        const lastAttendance = await AttendanceModel.findOne({
+            where: { profile_id: finalProfileId },
+            order: [['check_in_time', 'DESC']]
+        });
+
+        if (lastAttendance) {
+            const lastTime = new Date(lastAttendance.dataValues.check_in_time).getTime();
+            const now = new Date().getTime();
+            const diffMinutes = (now - lastTime) / (1000 * 60);
+
+            if (diffMinutes < 2) {
+                throw new BadRequestException('Entrada ya registrada recientemente. Esperá 2 minutos.');
+            }
+        }
 
         // Chequea si tiene la cuota al día
         const profile = await this.checkProfileOverdue(finalProfileId);
@@ -97,6 +111,22 @@ class AttendanceService extends BaseService<Model> {
             const profileId = qrRecord.dataValues.profile_id;
             if (!profileId) throw new BadRequestException('Este QR no tiene un perfil asociado. Regenerá el QR desde tu cuenta.');
 
+            // Anti-spam: Check for recent attendance
+            const lastAttendance = await AttendanceModel.findOne({
+                where: { profile_id: profileId },
+                order: [['check_in_time', 'DESC']]
+            });
+
+            if (lastAttendance) {
+                const lastTime = new Date(lastAttendance.dataValues.check_in_time).getTime();
+                const now = new Date().getTime();
+                const diffMinutes = (now - lastTime) / (1000 * 60);
+
+                if (diffMinutes < 2) {
+                    throw new BadRequestException('Entrada ya registrada recientemente. Esperá 2 minutos.');
+                }
+            }
+
             profile = await this.profileCollection.findByPk(profileId);
             if (!profile) throw new NotFoundException('No se encontró el perfil asociado al QR');
             if (profile.dataValues.billing_state !== 'OK') throw new BadRequestException('La cuota del alumno está vencida o pendiente');
@@ -128,6 +158,22 @@ class AttendanceService extends BaseService<Model> {
             profile = await this.profileCollection.findOne({ where: { dni } });
             if (!profile) throw new NotFoundException('No se encontró ningún alumno con ese DNI');
             if (profile.dataValues.billing_state !== 'OK') throw new BadRequestException('La cuota del alumno está vencida o pendiente');
+
+            // Anti-spam: Check for recent attendance
+            const lastAttendance = await AttendanceModel.findOne({
+                where: { profile_id: profile.dataValues.id },
+                order: [['check_in_time', 'DESC']]
+            });
+
+            if (lastAttendance) {
+                const lastTime = new Date(lastAttendance.dataValues.check_in_time).getTime();
+                const now = new Date().getTime();
+                const diffMinutes = (now - lastTime) / (1000 * 60);
+
+                if (diffMinutes < 2) {
+                    throw new BadRequestException('Entrada ya registrada recientemente. Esperá 2 minutos.');
+                }
+            }
 
             await profile.increment('marked_days', { by: 1 });
             await profile.reload();
