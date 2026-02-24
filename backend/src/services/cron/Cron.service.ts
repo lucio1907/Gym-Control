@@ -12,6 +12,7 @@ class CronService {
             try {
                 await this.checkPaymentReminders();
                 await this.checkDebtAlerts();
+                await this.checkAndUpdateExpirations();
             } catch (error) {
                 console.error("[CRON] Error running daily checks:", error);
             }
@@ -105,6 +106,45 @@ class CronService {
             } catch (err) {
                 console.error(`[CRON] Failed to send debt alert to ${profile.email}`, err);
             }
+        }
+    }
+
+    private async checkAndUpdateExpirations() {
+        console.log("[CRON] Checking for expired profiles to update billing_state...");
+        try {
+            const now = new Date();
+            
+            // Find users who are mark as OK but their expiration day has passed
+            const expiredProfiles = await ProfileModel.findAll({
+                where: {
+                    rol: "user",
+                    billing_state: "OK",
+                    expiration_day: {
+                        [Op.lt]: now
+                    }
+                }
+            }) as any[];
+
+            if (expiredProfiles.length > 0) {
+                console.log(`[CRON] Found ${expiredProfiles.length} expired profiles. Updating to 'defeated'...`);
+                
+                await ProfileModel.update(
+                    { billing_state: "defeated" },
+                    {
+                        where: {
+                            id: {
+                                [Op.in]: expiredProfiles.map(p => p.id)
+                            }
+                        }
+                    }
+                );
+                
+                console.log("[CRON] Profiles updated successfully.");
+            } else {
+                console.log("[CRON] No new expirations found.");
+            }
+        } catch (error) {
+            console.error("[CRON] Error updating expired profiles:", error);
         }
     }
 }

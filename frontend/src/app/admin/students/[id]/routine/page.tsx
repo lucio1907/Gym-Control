@@ -5,9 +5,10 @@ import { useRouter } from "next/navigation";
 import DashboardShell from "@/components/DashboardShell";
 import DeleteConfirmationModal from "@/components/DeleteConfirmationModal";
 import api from "@/lib/api";
-import { Dumbbell, Plus, Trash2, ArrowLeft, Loader2, PlayCircle, Save, CheckCircle2, LayoutDashboard, Send, ChevronRight } from "lucide-react";
+import { Dumbbell, Plus, Trash2, ArrowLeft, Loader2, PlayCircle, Save, CheckCircle2, LayoutDashboard, Send, ChevronRight, XCircle, HelpCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
+import FeedbackModal, { FeedbackType } from "@/components/FeedbackModal";
 
 export default function StudentRoutinePage({ params }: { params: Promise<{ id: string }> }) {
     const resolvedParams = use(params);
@@ -16,15 +17,42 @@ export default function StudentRoutinePage({ params }: { params: Promise<{ id: s
 
     const [student, setStudent] = useState<any>(null);
 
+    const [feedback, setFeedback] = useState<{
+        isOpen: boolean;
+        type: FeedbackType;
+        title: string;
+        message: string;
+        onConfirm?: () => void;
+    }>({
+        isOpen: false,
+        type: "success",
+        title: "",
+        message: ""
+    });
+
+    const showFeedback = (type: FeedbackType, title: string, message: string, onConfirm?: () => void) => {
+        setFeedback({ isOpen: true, type, title, message, onConfirm });
+    };
+
     const handleNotifyStudent = async () => {
-        if (!confirm("¿Notificar al alumno por mail?")) return;
-        try {
-            await api.post(`/routines/notify/${studentId}`);
-            alert("¡Alumno notificado con éxito!");
-        } catch (err) {
-            console.error(err);
-            alert("Error al notificar al alumno.");
-        }
+        showFeedback(
+            "confirm",
+            "Notificar Alumno",
+            "¿Deseás enviar una notificación por mail al alumno con su nueva rutina?",
+            async () => {
+                try {
+                    setFeedback(prev => ({ ...prev, isOpen: false })); // Close confirm modal
+                    setIsLoading(true);
+                    await api.post(`/routines/notify/${studentId}`);
+                    showFeedback("success", "Notificación Enviada", "¡El alumno ha sido notificado con éxito!");
+                } catch (err) {
+                    console.error(err);
+                    showFeedback("error", "Error de Envío", "No se pudo enviar la notificación. Intentá de nuevo.");
+                } finally {
+                    setIsLoading(false);
+                }
+            }
+        );
     };
 
     const DAYS_ORDER = ["lunes", "martes", "miercoles", "jueves", "viernes", "sabado", "domingo"];
@@ -677,6 +705,16 @@ export default function StudentRoutinePage({ params }: { params: Promise<{ id: s
                     )}
                 </AnimatePresence>
             </div>
+
+            <FeedbackModal
+                isOpen={feedback.isOpen}
+                onClose={() => setFeedback(prev => ({ ...prev, isOpen: false }))}
+                type={feedback.type}
+                title={feedback.title}
+                message={feedback.message}
+                onConfirm={feedback.onConfirm}
+                isLoading={isLoading}
+            />
 
             <DeleteConfirmationModal
                 isOpen={deleteModal.isOpen}

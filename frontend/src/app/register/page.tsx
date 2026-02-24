@@ -19,14 +19,22 @@ export default function RegisterPage() {
         lastname: "",
         email: "",
         password: "",
+        confirmPassword: "",
         phone: "",
         dni: "",
     });
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
-        if (fieldErrors[e.target.name]) {
-            setFieldErrors({ ...fieldErrors, [e.target.name]: "" });
+        let { name, value } = e.target;
+
+        // Numeric filtering for DNI and Phone
+        if (name === "dni" || name === "phone") {
+            value = value.replace(/\D/g, "");
+        }
+
+        setFormData({ ...formData, [name]: value });
+        if (fieldErrors[name]) {
+            setFieldErrors({ ...fieldErrors, [name]: "" });
         }
     };
 
@@ -39,6 +47,10 @@ export default function RegisterPage() {
         if (!validateDNI(formData.dni)) errors.dni = "DNI inválido (7-8 dígitos)";
         if (!validatePhone(formData.phone)) errors.phone = "Mínimo 10 dígitos";
         if (!validatePassword(formData.password)) errors.password = "Mínimo 8 caracteres";
+
+        if (formData.password !== formData.confirmPassword) {
+            errors.confirmPassword = "Las contraseñas no coinciden";
+        }
 
         setFieldErrors(errors);
         return Object.keys(errors).length === 0;
@@ -53,7 +65,9 @@ export default function RegisterPage() {
         setError(null);
 
         try {
-            await api.post("/profiles/register", formData);
+            // Remove confirmPassword before sending to API
+            const { confirmPassword, ...submitData } = formData;
+            await api.post("/profiles/register", submitData);
             setIsSuccess(true);
             setTimeout(() => router.push("/"), 3000);
         } catch (err: any) {
@@ -185,6 +199,7 @@ export default function RegisterPage() {
                                                 fieldErrors.dni && "border-rose-500/50 bg-rose-500/5"
                                             )}
                                             onChange={handleChange}
+                                            value={formData.dni}
                                         />
                                     </div>
                                     {fieldErrors.dni && <p className="text-[10px] text-rose-500 font-bold ml-1">{fieldErrors.dni}</p>}
@@ -202,27 +217,50 @@ export default function RegisterPage() {
                                                 fieldErrors.phone && "border-rose-500/50 bg-rose-500/5"
                                             )}
                                             onChange={handleChange}
+                                            value={formData.phone}
                                         />
                                     </div>
                                     {fieldErrors.phone && <p className="text-[10px] text-rose-500 font-bold ml-1">{fieldErrors.phone}</p>}
                                 </div>
 
-                                <div className="col-span-full space-y-2">
-                                    <label className="text-[10px] font-black text-neutral-500 uppercase tracking-[0.2em] ml-1">Contraseña</label>
-                                    <div className="relative group/input">
-                                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-neutral-600 group-focus-within/input:text-rose-500 transition-colors" />
-                                        <input
-                                            name="password"
-                                            type="password"
-                                            placeholder="Mínimo 8 caracteres"
-                                            className={cn(
-                                                "input-premium pl-16 py-3.5 text-sm",
-                                                fieldErrors.password && "border-rose-500/50 bg-rose-500/5"
-                                            )}
-                                            onChange={handleChange}
-                                        />
+                                <div className="col-span-full space-y-4">
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-neutral-500 uppercase tracking-[0.2em] ml-1">Contraseña</label>
+                                        <div className="relative group/input">
+                                            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-neutral-600 group-focus-within/input:text-rose-500 transition-colors" />
+                                            <input
+                                                name="password"
+                                                type="password"
+                                                placeholder="Mínimo 8 caracteres"
+                                                className={cn(
+                                                    "input-premium pl-16 py-3.5 text-sm",
+                                                    fieldErrors.password && "border-rose-500/50 bg-rose-500/5"
+                                                )}
+                                                onChange={handleChange}
+                                                value={formData.password}
+                                            />
+                                        </div>
+                                        {fieldErrors.password && <p className="text-[10px] text-rose-500 font-bold ml-1">{fieldErrors.password}</p>}
                                     </div>
-                                    {fieldErrors.password && <p className="text-[10px] text-rose-500 font-bold ml-1">{fieldErrors.password}</p>}
+
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-neutral-500 uppercase tracking-[0.2em] ml-1">Confirmar Contraseña</label>
+                                        <div className="relative group/input">
+                                            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-neutral-600 group-focus-within/input:text-rose-500 transition-colors" />
+                                            <input
+                                                name="confirmPassword"
+                                                type="password"
+                                                placeholder="Repetí tu contraseña"
+                                                className={cn(
+                                                    "input-premium pl-16 py-3.5 text-sm",
+                                                    fieldErrors.confirmPassword && "border-rose-500/50 bg-rose-500/5"
+                                                )}
+                                                onChange={handleChange}
+                                                value={formData.confirmPassword}
+                                            />
+                                        </div>
+                                        {fieldErrors.confirmPassword && <p className="text-[10px] text-rose-500 font-bold ml-1">{fieldErrors.confirmPassword}</p>}
+                                    </div>
                                 </div>
 
                                 <button

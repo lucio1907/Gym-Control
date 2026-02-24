@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/lib/supabase";
 import AddStudentModal from "@/components/AddStudentModal";
 import DeleteConfirmationModal from "@/components/DeleteConfirmationModal";
+import FeedbackModal, { FeedbackType } from "@/components/FeedbackModal";
 
 export default function AdminStudentsPage() {
     const router = useRouter();
@@ -21,6 +22,21 @@ export default function AdminStudentsPage() {
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [studentToDelete, setStudentToDelete] = useState<any | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
+    const [feedback, setFeedback] = useState<{
+        isOpen: boolean;
+        type: FeedbackType;
+        title: string;
+        message: string;
+    }>({
+        isOpen: false,
+        type: "success",
+        title: "",
+        message: ""
+    });
+
+    const showFeedback = (type: FeedbackType, title: string, message: string) => {
+        setFeedback({ isOpen: true, type, title, message });
+    };
 
     const fetchStudents = async () => {
         try {
@@ -66,7 +82,7 @@ export default function AdminStudentsPage() {
             setStudentToDelete(null);
         } catch (err) {
             console.error("Error deleting student", err);
-            alert("Error al eliminar el alumno.");
+            showFeedback("error", "Error de Eliminación", "No se pudo eliminar al alumno. Verificá tu conexión o intentá más tarde.");
         } finally {
             setIsDeleting(false);
         }
@@ -249,6 +265,14 @@ export default function AdminStudentsPage() {
                 isLoading={isDeleting}
                 title="Eliminar Alumno"
                 message={`¿Estás seguro de que deseas eliminar a ${studentToDelete?.name} ${studentToDelete?.lastname}? Esta acción limpiará su perfil y historial definitivamente.`}
+            />
+
+            <FeedbackModal
+                isOpen={feedback.isOpen}
+                onClose={() => setFeedback(prev => ({ ...prev, isOpen: false }))}
+                type={feedback.type}
+                title={feedback.title}
+                message={feedback.message}
             />
         </DashboardShell>
     );

@@ -24,8 +24,20 @@ class AttendanceService extends BaseService<Model> {
 
     private checkProfileOverdue = async (profileId: string): Promise<Model> => {
         const profile = await this.profileCollection.findByPk(profileId);
+        
+        if (!profile) throw new NotFoundException('Perfil no encontrado');
 
-        if (profile?.dataValues.billing_state !== 'OK') throw new BadRequestException('Overdue fee');
+        const now = new Date();
+        const expirationDay = profile.dataValues.expiration_day;
+
+        // Block if manually set to defeated/pending OR if the date has passed in real-time
+        if (profile.dataValues.billing_state !== 'OK' || (expirationDay && now > new Date(expirationDay))) {
+            // If the date passed but state is still OK (cron hasn't run), we inform the user
+            if (profile.dataValues.billing_state === 'OK') {
+                console.log(`[ATTENDANCE] Blocking user ${profileId} due to real-time expiration check.`);
+            }
+            throw new BadRequestException('La cuota está vencida o pendiente de pago');
+        }
 
         return profile;
     };
@@ -111,7 +123,10 @@ class AttendanceService extends BaseService<Model> {
             const profileId = qrRecord.dataValues.profile_id;
             if (!profileId) throw new BadRequestException('Este QR no tiene un perfil asociado. Regenerá el QR desde tu cuenta.');
 
-            // Anti-spam: Check for recent attendance
+            // 1. Unified Validation (Billing + Real-time Expiration)
+            profile = await this.checkProfileOverdue(profileId);
+
+            // 2. Anti-spam: Check for recent attendance
             const lastAttendance = await AttendanceModel.findOne({
                 where: { profile_id: profileId },
                 order: [['check_in_time', 'DESC']]
@@ -126,10 +141,6 @@ class AttendanceService extends BaseService<Model> {
                     throw new BadRequestException('Entrada ya registrada recientemente. Esperá 2 minutos.');
                 }
             }
-
-            profile = await this.profileCollection.findByPk(profileId);
-            if (!profile) throw new NotFoundException('No se encontró el perfil asociado al QR');
-            if (profile.dataValues.billing_state !== 'OK') throw new BadRequestException('La cuota del alumno está vencida o pendiente');
 
             await profile.increment('marked_days', { by: 1 });
             await profile.reload();
@@ -155,11 +166,13 @@ class AttendanceService extends BaseService<Model> {
         if (method === 'DNI') {
             if (!dni) throw new BadRequestException('El DNI es requerido');
 
-            profile = await this.profileCollection.findOne({ where: { dni } });
-            if (!profile) throw new NotFoundException('No se encontró ningún alumno con ese DNI');
-            if (profile.dataValues.billing_state !== 'OK') throw new BadRequestException('La cuota del alumno está vencida o pendiente');
+            const tempProfile = await this.profileCollection.findOne({ where: { dni } });
+            if (!tempProfile) throw new NotFoundException('No se encontró ningún alumno con ese DNI');
 
-            // Anti-spam: Check for recent attendance
+            // 1. Unified Validation (Billing + Real-time Expiration)
+            profile = await this.checkProfileOverdue(tempProfile.dataValues.id);
+
+            // 2. Anti-spam: Check for recent attendance
             const lastAttendance = await AttendanceModel.findOne({
                 where: { profile_id: profile.dataValues.id },
                 order: [['check_in_time', 'DESC']]
