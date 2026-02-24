@@ -6,7 +6,7 @@ const checkSession = async (req: Request, res: Response, next: NextFunction) => 
     try {
         const token = req.cookies.access_token;
 
-        if (!token) res.status(401).json({ message: 'Unauthorized', status: "Unauthorized" });
+        if (!token) return res.status(401).json({ message: 'Unauthorized', status: "Unauthorized" });
 
         const decoded = await jwtManagement.compareToken(token);
 
