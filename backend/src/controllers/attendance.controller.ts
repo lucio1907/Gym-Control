@@ -15,6 +15,16 @@ export const checkIn = async (req: Request, res: Response, next: NextFunction) =
     }
 };
 
+export const monitorCheckIn = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { token, dni, method } = req.body;
+        const result = await attendanceService.monitorEntry({ token, dni, method });
+        return res.json({ message: "¡Check-in exitoso!", data: result, status: "OK" });
+    } catch (error) {
+        next(error);
+    }
+};
+
 export const getAttendanceHistory = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const profileId = (req as any).user.rol === 'admin' ? req.query.profileId as string : (req as any).user.id;

@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { LogOut, LayoutDashboard, User, Calendar, CreditCard, Dumbbell, CheckCircle2, Loader2, AlertCircle, ChevronRight, Activity } from "lucide-react";
+import { useEffect, useState, useRef } from "react";
+import { LogOut, LayoutDashboard, User, Calendar, CreditCard, Dumbbell, CheckCircle2, Loader2, AlertCircle, ChevronRight, Activity, QrCode, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import api from "@/lib/api";
 import { motion, AnimatePresence } from "framer-motion";
 import DashboardShell from "@/components/DashboardShell";
+import { Html5Qrcode } from "html5-qrcode";
 
 export default function StudentDashboardPage() {
     const router = useRouter();
@@ -14,8 +15,16 @@ export default function StudentDashboardPage() {
     const [routines, setRoutines] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [isScanning, setIsScanning] = useState(false);
+    const [scanStatus, setScanStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+    const [scanMessage, setScanMessage] = useState<string | null>(null);
+
+    const scannerRef = useRef<Html5Qrcode | null>(null);
+    const SCANNER_ID = "dashboard-qr-scanner";
 
     const DAYS_ORDER = ["lunes", "martes", "miercoles", "jueves", "viernes", "sabado", "domingo"];
+
+    // ... rest of sortDays and normalization functions from original (lines 19-30)
     const normalize = (s: string) => s.toLowerCase().trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
     const sortDays = (daysObj: any) => {
         if (!daysObj) return [];
@@ -31,6 +40,7 @@ export default function StudentDashboardPage() {
 
     useEffect(() => {
         const fetchData = async () => {
+            // ... original fetchData (lines 33-51)
             try {
                 const profileRes = await api.get("/profiles/me");
                 const userData = profileRes.data.data;
@@ -51,7 +61,64 @@ export default function StudentDashboardPage() {
         fetchData();
     }, [router]);
 
+    // QR Scanning Effect
+    useEffect(() => {
+        if (isScanning && scanStatus === 'idle') {
+            if (!window.isSecureContext && window.location.hostname !== "localhost") {
+                setScanStatus('error');
+                setScanMessage("Acceso denegado: La cámara requiere una conexión segura (HTTPS) para funcionar en dispositivos móviles.");
+                return;
+            }
+
+            const html5QrCode = new Html5Qrcode(SCANNER_ID);
+            scannerRef.current = html5QrCode;
+
+            html5QrCode.start(
+                { facingMode: "environment" },
+                { fps: 10, qrbox: { width: 250, height: 250 } },
+                (decodedText) => {
+                    handleScanSuccess(decodedText);
+                },
+                () => { }
+            ).catch(err => {
+                console.error("QR Error", err);
+                setScanStatus('error');
+                const errorMessage = err.toString().includes("Permission denied")
+                    ? "Permiso de cámara denegado. Habilitá el acceso en los ajustes de tu navegador."
+                    : "No se pudo acceder a la cámara. Asegurate de no estar usando otra app con la cámara.";
+                setScanMessage(errorMessage);
+            });
+
+            return () => {
+                if (html5QrCode.isScanning) {
+                    html5QrCode.stop().catch(e => console.error(e));
+                }
+            };
+        }
+    }, [isScanning]);
+
+    const handleScanSuccess = async (token: string) => {
+        setScanStatus('loading');
+        try {
+            const response = await api.post(`/attendance/check-in/QR_SCAN`, { qrToken: token });
+            if (response.data.status === 'OK') {
+                setScanStatus('success');
+                setScanMessage('¡Asistencia registrada con éxito!');
+                setTimeout(() => {
+                    setIsScanning(false);
+                    setScanStatus('idle');
+                    window.location.reload(); // Refresh to see updated marked_days
+                }, 3000);
+            }
+        } catch (err: any) {
+            setScanStatus('error');
+            setScanMessage(err.response?.data?.message || err.message || "Código inválido o expirado.");
+            setTimeout(() => setScanStatus('idle'), 4000);
+        }
+    };
+
     if (isLoading) {
+        // ... original loading UI (lines 54-63)
         return (
             <div className="min-h-screen bg-[#050505] flex flex-col items-center justify-center gap-6 px-6 text-center">
                 <motion.div animate={{ rotate: 360 }} transition={{ duration: 2, repeat: Infinity, ease: "linear" }}>
@@ -62,6 +129,7 @@ export default function StudentDashboardPage() {
         );
     }
 
+    // ... original error UI (lines 65-74)
     if (error) {
         return (
             <div className="min-h-screen bg-[#050505] flex flex-col items-center justify-center p-6 text-center">
@@ -81,6 +149,56 @@ export default function StudentDashboardPage() {
 
     return (
         <DashboardShell role="STUDENT" userName={profile?.name}>
+            {/* QR Scanner Modal */}
+            <AnimatePresence>
+                {isScanning && (
+                    <motion.div
+                        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-2xl flex flex-col items-center justify-center p-6"
+                    >
+                        <button
+                            onClick={() => { setIsScanning(false); setScanStatus('idle'); }}
+                            className="absolute top-8 right-8 p-4 rounded-full bg-white/5 border border-white/10 text-white hover:bg-rose-600 transition-colors"
+                        >
+                            <X className="h-8 w-8" />
+                        </button>
+
+                        <div className="max-w-md w-full text-center space-y-8">
+                            <div className="space-y-4">
+                                <h2 className="text-4xl font-black font-outfit uppercase italic italic tracking-tighter">Escanear <span className="text-rose-600">Entrada</span></h2>
+                                <p className="text-neutral-500 font-bold uppercase tracking-widest text-xs">Apuntá tu cámara al QR del monitor</p>
+                            </div>
+
+                            <div className="relative mx-auto w-fit">
+                                <div className="absolute -inset-4 bg-rose-600/20 blur-xl rounded-full opacity-50" />
+                                <div className="relative w-72 h-72 md:w-80 md:h-80 rounded-[2.5rem] overflow-hidden border-4 border-rose-600 shadow-2xl bg-black">
+                                    <div id={SCANNER_ID} className="w-full h-full object-cover" />
+                                    {scanStatus === 'loading' && (
+                                        <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center">
+                                            <Loader2 className="h-12 w-12 text-rose-600 animate-spin mb-4" />
+                                            <p className="text-xs font-black text-white uppercase tracking-widest">Validando...</p>
+                                        </div>
+                                    )}
+                                    {scanStatus === 'success' && (
+                                        <div className="absolute inset-0 bg-green-500/90 flex flex-col items-center justify-center p-6 text-center">
+                                            <CheckCircle2 className="h-20 w-20 text-white mb-4" />
+                                            <p className="text-xl font-black text-white uppercase italic font-outfit">{scanMessage}</p>
+                                        </div>
+                                    )}
+                                    {scanStatus === 'error' && (
+                                        <div className="absolute inset-0 bg-rose-500/90 flex flex-col items-center justify-center p-6 text-center">
+                                            <AlertCircle className="h-20 w-20 text-white mb-4" />
+                                            <p className="text-xl font-black text-white uppercase italic font-outfit">{scanMessage}</p>
+                                            <button onClick={() => setScanStatus('idle')} className="mt-4 px-6 py-2 bg-white text-rose-600 rounded-full font-black text-xs uppercase tracking-widest">REINTENTAR</button>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
             <motion.header
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -90,15 +208,32 @@ export default function StudentDashboardPage() {
                     <h1 className="text-4xl md:text-6xl font-black tracking-tighter font-outfit uppercase italic leading-[0.9]">
                         ¡Hola, <span className="text-rose-600">{profile?.name}</span>! 👋
                     </h1>
-                    <p className="text-neutral-500 font-bold tracking-[0.2em] uppercase text-[9px] md:text-[10px]">Es momento de romper tus límites</p>
-                </div>
-                <div className="flex items-center gap-4 glass p-3 md:p-4 rounded-full border-white/5 pr-6 max-w-fit">
-                    <div className="h-12 w-12 md:h-16 md:w-16 rounded-full bg-gradient-to-tr from-rose-600 to-rose-400 border border-white/10 flex items-center justify-center font-black text-white text-xl shadow-xl shadow-rose-600/20 shrink-0 capitalize">
-                        {profile?.name?.[0]}{profile?.lastname?.[0]}
+                    <div className="flex flex-wrap gap-4 mt-4">
+                        <p className="text-neutral-500 font-bold tracking-[0.2em] uppercase text-[9px] md:text-[10px]">Es momento de romper tus límites</p>
                     </div>
-                    <div className="min-w-0">
-                        <p className="text-xs md:text-sm font-black text-white uppercase tracking-wider truncate">{profile?.name} {profile?.lastname}</p>
-                        <p className="text-[9px] font-bold text-neutral-500 uppercase tracking-widest mt-1">Alumno Elite</p>
+                </div>
+
+                <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
+                    {/* New QR Scan Button */}
+                    <button
+                        onClick={() => setIsScanning(true)}
+                        className="btn-premium px-8 py-5 h-fit shadow-rose-600/30 group relative overflow-hidden"
+                    >
+                        <span className="relative z-10 flex items-center gap-3">
+                            <QrCode className="h-5 w-5 group-hover:scale-110 transition-transform" />
+                            MARCAR ENTRADA
+                        </span>
+                        <div className="absolute inset-0 bg-gradient-to-r from-rose-500 to-rose-700 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </button>
+
+                    <div className="flex items-center gap-4 glass p-3 md:p-4 rounded-full border-white/5 pr-6 max-w-fit">
+                        <div className="h-12 w-12 md:h-16 md:w-16 rounded-full bg-gradient-to-tr from-rose-600 to-rose-400 border border-white/10 flex items-center justify-center font-black text-white text-xl shadow-xl shadow-rose-600/20 shrink-0 capitalize">
+                            {profile?.name?.[0]}{profile?.lastname?.[0]}
+                        </div>
+                        <div className="min-w-0">
+                            <p className="text-xs md:text-sm font-black text-white uppercase tracking-wider truncate">{profile?.name} {profile?.lastname}</p>
+                            <p className="text-[9px] font-bold text-neutral-500 uppercase tracking-widest mt-1">Alumno Elite</p>
+                        </div>
                     </div>
                 </div>
             </motion.header>

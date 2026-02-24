@@ -12,6 +12,10 @@ const TemporalQrModel = sequelizeConfig.define("active_qrs", {
     type: DataTypes.STRING,
     allowNull: false,
   },
+  profile_id: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
   expires_at: {
     type: DataTypes.DATE,
     allowNull: false,
