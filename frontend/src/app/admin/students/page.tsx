@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import DashboardShell from "@/components/DashboardShell";
 import api from "@/lib/api";
@@ -34,11 +34,11 @@ export default function AdminStudentsPage() {
         message: ""
     });
 
-    const showFeedback = (type: FeedbackType, title: string, message: string) => {
+    const showFeedback = useCallback((type: FeedbackType, title: string, message: string) => {
         setFeedback({ isOpen: true, type, title, message });
-    };
+    }, []);
 
-    const fetchStudents = async () => {
+    const fetchStudents = useCallback(async () => {
         try {
             const res = await api.get("/profiles");
             // Backend uses 'user' role for students
@@ -48,7 +48,7 @@ export default function AdminStudentsPage() {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, []);
 
     useEffect(() => {
         fetchStudents();
@@ -64,14 +64,14 @@ export default function AdminStudentsPage() {
         return () => {
             supabase.removeChannel(profilesChannel);
         };
-    }, []);
+    }, [fetchStudents]);
 
-    const handleDeleteClick = (student: any) => {
+    const handleDeleteClick = useCallback((student: any) => {
         setStudentToDelete(student);
         setIsDeleteModalOpen(true);
-    };
+    }, []);
 
-    const confirmDelete = async () => {
+    const confirmDelete = useCallback(async () => {
         if (!studentToDelete) return;
 
         setIsDeleting(true);
@@ -87,13 +87,16 @@ export default function AdminStudentsPage() {
         } finally {
             setIsDeleting(false);
         }
-    };
+    }, [studentToDelete, fetchStudents, showFeedback]);
 
-    const filteredStudents = students.filter(s =>
-        s.name.toLowerCase().includes(search.toLowerCase()) ||
-        s.lastname.toLowerCase().includes(search.toLowerCase()) ||
-        s.dni.includes(search)
-    );
+    const filteredStudents = useMemo(() => {
+        const query = search.toLowerCase();
+        return students.filter(s =>
+            s.name.toLowerCase().includes(query) ||
+            s.lastname.toLowerCase().includes(query) ||
+            s.dni.includes(query)
+        );
+    }, [students, search]);
 
     return (
         <DashboardShell role="ADMIN">

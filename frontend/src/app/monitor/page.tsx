@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import {
     CheckCircle2,
     XCircle,
@@ -116,7 +116,7 @@ export default function MonitorPage() {
         };
     }, []);
 
-    const handleCheckIn = async (dniValue: string) => {
+    const handleCheckIn = useCallback(async (dniValue: string) => {
         if (status !== "idle" || !dniValue) return;
 
         setStatus("loading");
@@ -145,13 +145,13 @@ export default function MonitorPage() {
                 setDni("");
             }, 4000);
         }
-    };
+    }, [status]);
 
-    const onKeyDown = (e: React.KeyboardEvent) => {
+    const onKeyDown = useCallback((e: React.KeyboardEvent) => {
         if (e.key === "Enter") {
             handleCheckIn(dni);
         }
-    };
+    }, [handleCheckIn, dni]);
 
     return (
         <div className="min-h-screen bg-[#050505] text-white flex flex-col font-sans selection:bg-rose-500/30 overflow-hidden">

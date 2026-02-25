@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { Profile } from "@/types/profiles";
 import { Loader2, Plus, User, Mail, Phone, Lock, Hash, CheckCircle2 } from "lucide-react";
 import Modal from "./Modal";
 import api from "@/lib/api";
@@ -11,7 +12,7 @@ interface AddStudentModalProps {
     isOpen: boolean;
     onClose: () => void;
     onSuccess: () => void;
-    student?: any; // If provided, the modal acts as an Edit modal
+    student?: Profile; // If provided, the modal acts as an Edit modal
 }
 
 export default function AddStudentModal({ isOpen, onClose, onSuccess, student }: AddStudentModalProps) {
@@ -44,7 +45,7 @@ export default function AddStudentModal({ isOpen, onClose, onSuccess, student }:
         }
     }, [isOpen, student]);
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = useCallback(async (e: React.FormEvent) => {
         e.preventDefault();
         setError(null);
         setFieldErrors({});
@@ -79,7 +80,7 @@ export default function AddStudentModal({ isOpen, onClose, onSuccess, student }:
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [formData, student, onSuccess, onClose]);
 
     return (
         <Modal

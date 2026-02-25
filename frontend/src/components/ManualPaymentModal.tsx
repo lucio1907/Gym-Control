@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { Profile } from "@/types/profiles";
 import { Loader2, CreditCard, Search, Calendar, DollarSign, Wallet } from "lucide-react";
 import Modal from "./Modal";
 import api from "@/lib/api";
@@ -17,8 +18,8 @@ export default function ManualPaymentModal({ isOpen, onClose, onSuccess }: Manua
     const [searchLoading, setSearchLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [searchTerm, setSearchTerm] = useState("");
-    const [students, setStudents] = useState<any[]>([]);
-    const [selectedStudent, setSelectedStudent] = useState<any>(null);
+    const [students, setStudents] = useState<Profile[]>([]);
+    const [selectedStudent, setSelectedStudent] = useState<Profile | null>(null);
 
     const [formData, setFormData] = useState({
         amount: "",
@@ -77,7 +78,7 @@ export default function ManualPaymentModal({ isOpen, onClose, onSuccess }: Manua
         return () => clearTimeout(delayDebounceFn);
     }, [searchTerm]);
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = useCallback(async (e: React.FormEvent) => {
         e.preventDefault();
         if (!selectedStudent) {
             setError("Seleccioná un alumno");
@@ -110,7 +111,7 @@ export default function ManualPaymentModal({ isOpen, onClose, onSuccess }: Manua
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [selectedStudent, formData, onSuccess, onClose]);
 
     return (
         <Modal isOpen={isOpen} onClose={onClose} title="Cobro Manual" className="max-w-xl">
