@@ -1,5 +1,4 @@
 import nodemailer from "nodemailer";
-import SMTPTransport from "nodemailer/lib/smtp-transport";
 import fs from "fs/promises";
 import path from "path";
 
@@ -17,7 +16,11 @@ class EmailService {
             },
             tls: {
                 rejectUnauthorized: false // Often needed for some SMTP relays
-            }
+            },
+            pool: true,
+            connectionTimeout: 15000,
+            greetingTimeout: 15000,
+            socketTimeout: 15000
         });
     }
 
@@ -28,7 +31,7 @@ class EmailService {
         data: Record<string, string>,
         fromName?: string,
         fromEmail?: string
-    ): Promise<SMTPTransport.SentMessageInfo> => {
+    ): Promise<any> => {
         try {
             // Busca la ruta del archivo HTML
             const templatePath = path.join(__dirname, "../../templates", `${templateFileName}.html`);
