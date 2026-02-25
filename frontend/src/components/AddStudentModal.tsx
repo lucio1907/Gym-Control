@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Loader2, Plus, User, Mail, Phone, Lock, Hash } from "lucide-react";
+import { Loader2, Plus, User, Mail, Phone, Lock, Hash, CheckCircle2 } from "lucide-react";
 import Modal from "./Modal";
 import api from "@/lib/api";
 import { cn } from "@/lib/utils";
@@ -180,12 +180,13 @@ export default function AddStudentModal({ isOpen, onClose, onSuccess, student }:
                             <Loader2 className="h-5 w-5 animate-spin mx-auto" />
                         ) : (
                             <span className="flex items-center justify-center gap-2 uppercase italic">
-                                Completar Registro <Plus className="h-4 w-4" />
+                                {student ? "Guardar Cambios" : "Completar Registro"}
+                                {student ? <CheckCircle2 className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
                             </span>
                         )}
                     </button>
                     <p className="text-[9px] text-center text-neutral-600 font-bold uppercase tracking-widest mt-4 leading-relaxed">
-                        El alumno recibirá un correo de bienvenida con su plan activo.
+                        {student ? "Los cambios se aplicarán inmediatamente." : "El alumno recibirá un correo de bienvenida con su plan activo."}
                     </p>
                 </div>
             </form>

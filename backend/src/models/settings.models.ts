@@ -37,6 +37,14 @@ const SettingsModel = sequelizeConfig.define("setting", {
     type: DataTypes.BOOLEAN,
     defaultValue: true,
     allowNull: false
+  },
+  gym_email: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  gym_sender_name: {
+    type: DataTypes.STRING,
+    allowNull: true
   }
 }, {
   timestamps: true,

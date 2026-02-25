@@ -93,7 +93,7 @@ export default function ProfilePage() {
     };
 
     return (
-        <DashboardShell role="STUDENT">
+        <DashboardShell role="STUDENT" userName={profile?.name}>
             <motion.header
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}

@@ -77,7 +77,8 @@ export default function AdminStudentsPage() {
         setIsDeleting(true);
         try {
             await api.delete(`/profiles/${studentToDelete.id}`);
-            // List will auto-update via Supabase Realtime
+            // Explicitly refetch to ensure UI is in sync immediately
+            await fetchStudents();
             setIsDeleteModalOpen(false);
             setStudentToDelete(null);
         } catch (err) {
@@ -177,16 +178,24 @@ export default function AdminStudentsPage() {
                                         </td>
                                         <td className="px-6 py-6 font-outfit">
                                             {(() => {
-                                                const isExpired = new Date(student.expiration_day) < new Date();
-                                                const isPending = student.billing_state !== "OK" || isExpired;
+                                                const hasDate = !!student.expiration_day;
+                                                const isExpired = hasDate && new Date(student.expiration_day) < new Date();
+                                                const isPending = student.billing_state !== "OK" || isExpired || !hasDate;
 
                                                 return (
-                                                    <div className={cn(
-                                                        "inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border shrink-0",
-                                                        !isPending ? "bg-green-500/10 text-green-500 border-green-500/20" : "bg-amber-500/10 text-amber-500 border-amber-500/20"
-                                                    )}>
-                                                        {!isPending ? <CheckCircle2 className="h-2.5 w-2.5" /> : <AlertCircle className="h-2.5 w-2.5" />}
-                                                        {!isPending ? "Vigente" : isExpired ? "Vencido" : "Pendiente"}
+                                                    <div className="flex flex-col gap-1.5 items-start">
+                                                        <div className={cn(
+                                                            "inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border shrink-0",
+                                                            !isPending ? "bg-green-500/10 text-green-500 border-green-500/20" : "bg-amber-500/10 text-amber-500 border-amber-500/20"
+                                                        )}>
+                                                            {!isPending ? <CheckCircle2 className="h-2.5 w-2.5" /> : <AlertCircle className="h-2.5 w-2.5" />}
+                                                            {!isPending ? "Vigente" : isExpired ? "Vencido" : "Pendiente"}
+                                                        </div>
+                                                        {hasDate && (
+                                                            <p className="text-[9px] font-bold text-neutral-500 uppercase tracking-widest ml-1">
+                                                                Vence: {new Date(student.expiration_day).toLocaleDateString('es-AR', { timeZone: 'UTC' })}
+                                                            </p>
+                                                        )}
                                                     </div>
                                                 );
                                             })()}

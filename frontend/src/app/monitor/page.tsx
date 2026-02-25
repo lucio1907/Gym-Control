@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import api from "@/lib/api";
+import { supabase } from "@/lib/supabase";
 import { motion, AnimatePresence } from "framer-motion";
 
 type Status = "idle" | "loading" | "success" | "error";
@@ -77,6 +78,42 @@ export default function MonitorPage() {
         fetchQR();
         const interval = setInterval(fetchQR, 60000); // 1 minute refresh
         return () => clearInterval(interval);
+    }, []);
+
+    // Real-time listener for QR scans done from mobile
+    useEffect(() => {
+        const attendanceChannel = supabase
+            .channel('public:attendance_monitor')
+            .on(
+                'postgres_changes',
+                { event: 'INSERT', schema: 'public', table: 'attendance' },
+                async (payload) => {
+                    const newEntry = payload.new as any;
+
+                    // If a student scanned the monitor's QR or a temporal QR from mobile
+                    if (newEntry.method === 'QR_SCAN') {
+                        try {
+                            const res = await api.get(`/attendance/monitor-profile/${newEntry.profile_id}`);
+                            if (res.data.status === "OK") {
+                                setStudentInfo(res.data.data);
+                                setStatus("success");
+                                setMessage("¡Bienvenido!");
+
+                                setTimeout(() => {
+                                    setStatus("idle");
+                                }, 4000);
+                            }
+                        } catch (err) {
+                            console.error("Error fetching student info for monitor:", err);
+                        }
+                    }
+                }
+            )
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(attendanceChannel);
+        };
     }, []);
 
     const handleCheckIn = async (dniValue: string) => {

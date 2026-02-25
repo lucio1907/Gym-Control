@@ -17,7 +17,7 @@ export default function DashboardShell({ children, role = "STUDENT", userName }:
     const router = useRouter();
 
     return (
-        <div className="min-h-screen bg-[#050505] text-white flex overflow-hidden">
+        <div className="h-screen bg-[#050505] text-white flex overflow-hidden">
             {/* Desktop Sidebar (Permanent on LG+) */}
             <Sidebar role={role} userName={userName} />
 

@@ -210,6 +210,17 @@ class AttendanceService extends BaseService<Model> {
         throw new BadRequestException('Método de check-in inválido');
     };
 
+    public getProfileInfoForMonitor = async (profileId: string) => {
+        const profile = await this.profileCollection.findByPk(profileId);
+        if (!profile) throw new NotFoundException('Perfil no encontrado');
+
+        return {
+            name: profile.dataValues.name,
+            lastname: profile.dataValues.lastname,
+            marked_days: profile.dataValues.marked_days
+        };
+    };
+
     public getHistory = async (profileId?: string): Promise<Model[]> => {
         const where: any = {};
         if (profileId) where.profile_id = profileId;

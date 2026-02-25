@@ -3,6 +3,7 @@ import PaymentsModel from "../../models/payments.models";
 import ProfileModel from "../../models/profiles.models";
 import { BaseService } from "../BaseService.service";
 import { v4 as uuid } from "uuid";
+import calculateBillingDate from "../../utils/billingDate.utils";
 import BadRequestException from "../../errors/BadRequestException";
 import NotFoundException from "../../errors/NotFoundException";
 
@@ -16,8 +17,9 @@ class PaymentService extends BaseService<Model> {
         amount: number;
         concept: string;
         mp_payment_id: string;
+        payment_date?: Date;
     }) => {
-        const { profile_id, amount, concept, mp_payment_id } = data;
+        const { profile_id, amount, concept, mp_payment_id, payment_date } = data;
 
         const profile = await ProfileModel.findByPk(profile_id);
         if (!profile) throw new NotFoundException("Profile not found");
@@ -28,13 +30,12 @@ class PaymentService extends BaseService<Model> {
             amount,
             concept,
             mp_payment_id,
-            payment_date: new Date(),
+            payment_date: payment_date || new Date(),
             status: "completed"
         });
 
         // Update profile subscription
-        const expirationDate = new Date();
-        expirationDate.setMonth(expirationDate.getMonth() + 1); // 1 month from now
+        const expirationDate = calculateBillingDate(payment_date || new Date());
 
         await profile.update({
             billing_state: "OK",

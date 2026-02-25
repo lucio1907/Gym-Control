@@ -232,7 +232,7 @@ export default function ProgressPage() {
     }
 
     return (
-        <DashboardShell role="STUDENT">
+        <DashboardShell role="STUDENT" userName={profile?.name}>
             {/* Header */}
             <motion.header
                 initial={{ opacity: 0, y: -10 }}

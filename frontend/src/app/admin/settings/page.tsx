@@ -31,7 +31,9 @@ export default function AdminSettingsPage() {
         base_fee: "15000",
         notif_payment_reminder: true,
         notif_debt_alert: true,
-        notif_routine_update: true
+        notif_routine_update: true,
+        gym_email: "",
+        gym_sender_name: ""
     });
 
     // Password State
@@ -67,7 +69,9 @@ export default function AdminSettingsPage() {
                     base_fee: sData.base_fee?.toString() || "15000",
                     notif_payment_reminder: sData.notif_payment_reminder ?? true,
                     notif_debt_alert: sData.notif_debt_alert ?? true,
-                    notif_routine_update: sData.notif_routine_update ?? true
+                    notif_routine_update: sData.notif_routine_update ?? true,
+                    gym_email: sData.gym_email || "",
+                    gym_sender_name: sData.gym_sender_name || ""
                 });
             }
         } catch (err) {
@@ -335,6 +339,30 @@ export default function AdminSettingsPage() {
                                                         className="input-premium text-white"
                                                         value={settingsForm.base_fee}
                                                         onChange={(e) => setSettingsForm({ ...settingsForm, base_fee: e.target.value })}
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-4 border-b border-white/5">
+                                                <div className="space-y-2">
+                                                    <label className="text-[10px] font-black text-neutral-500 uppercase tracking-widest ml-1">Email del Gimnasio</label>
+                                                    <input
+                                                        type="email"
+                                                        placeholder="ej: contacto@gym.com"
+                                                        className="input-premium text-white border-rose-500/20"
+                                                        value={settingsForm.gym_email}
+                                                        onChange={(e) => setSettingsForm({ ...settingsForm, gym_email: e.target.value })}
+                                                    />
+                                                    <p className="text-[9px] text-neutral-500 font-bold ml-1 italic">* Debe estar verificado en Brevo.</p>
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <label className="text-[10px] font-black text-neutral-500 uppercase tracking-widest ml-1">Nombre para Envío</label>
+                                                    <input
+                                                        type="text"
+                                                        placeholder="ej: Gym Alfa 💥"
+                                                        className="input-premium text-white"
+                                                        value={settingsForm.gym_sender_name}
+                                                        onChange={(e) => setSettingsForm({ ...settingsForm, gym_sender_name: e.target.value })}
                                                     />
                                                 </div>
                                             </div>

@@ -1,6 +1,7 @@
 import { nanoid } from "nanoid";
 import ProfileModel from "../../models/profiles.models";
 import emailService from "../emails/email.service";
+import settingsService from "../settings/Settings.service";
 
 class ForgotPasswordService {
     public async forgotPassword(email: string) {
@@ -23,6 +24,8 @@ class ForgotPasswordService {
 
         const recoveryUrl = `${process.env.FRONTEND_URL}/reset-password?token=${recoveryToken}`;
 
+        const settings = await settingsService.getSettings() as any;
+
         await emailService.sendEmail(
             email,
             "Restablecer tu contraseña - Gym Control",
@@ -30,7 +33,9 @@ class ForgotPasswordService {
             {
                 name: user.name,
                 recovery_url: recoveryUrl
-            }
+            },
+            settings.gym_sender_name,
+            settings.gym_email
         );
 
         return { message: "Recovery email sent." };

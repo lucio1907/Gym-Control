@@ -51,7 +51,7 @@ export default function Sidebar({ role = "STUDENT", userName, isMobile, onMobile
 
     return (
         <aside className={cn(
-            "h-full glass flex flex-col p-8 space-y-10 transition-all duration-300",
+            "h-screen sticky top-0 glass flex flex-col p-8 space-y-10 transition-all duration-300",
             isMobile ? "w-full border-r-0" : "w-72 border-r border-white/5 hidden lg:flex"
         )}>
             <div className="flex items-center justify-between gap-3 px-2">
@@ -104,7 +104,7 @@ export default function Sidebar({ role = "STUDENT", userName, isMobile, onMobile
             <div className="pt-10 border-t border-white/5">
                 <div className="mb-6 px-4">
                     <p className="text-[10px] font-black text-neutral-600 uppercase tracking-widest leading-none mb-1">Usuario Activo</p>
-                    <p className="text-xs font-black text-white truncate italic">{userName || 'Administrador'}</p>
+                    <p className="text-xs font-black text-white truncate italic">{userName || (role === 'ADMIN' ? 'Administrador' : 'Alumno')}</p>
                 </div>
                 <button
                     onClick={handleLogout}

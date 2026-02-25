@@ -3,6 +3,7 @@ import NotFoundException from "../../errors/NotFoundException";
 import ProfileModel from "../../models/profiles.models";
 import RoutinesModel from "../../models/routines.models";
 import emailService from "../emails/email.service";
+import settingsService from "../settings/Settings.service";
 
 class NotifyRoutineService {
     public notify = async (profileId: string): Promise<void> => {
@@ -18,6 +19,8 @@ class NotifyRoutineService {
 
         if (!activeRoutine) throw new NotFoundException('No active routine found for this student');
 
+        const settings = await settingsService.getSettings() as any;
+
         await emailService.sendEmail(
             profile.dataValues.email,
             "🔥 ¡Tu nueva rutina está lista!",
@@ -25,7 +28,9 @@ class NotifyRoutineService {
             {
                 name: profile.dataValues.name,
                 routine_name: activeRoutine.dataValues.routine_name
-            }
+            },
+            settings.gym_sender_name,
+            settings.gym_email
         );
     };
 }

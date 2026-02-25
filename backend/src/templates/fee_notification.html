@@ -12,6 +12,14 @@
             -ms-text-size-adjust: 100%;
         }
 
+        img {
+            border: 0;
+            height: auto;
+            line-height: 100%;
+            outline: none;
+            text-decoration: none;
+        }
+
         table {
             border-collapse: collapse !important;
         }
@@ -38,35 +46,42 @@
                     <tr>
                         <td style="padding: 40px 40px 30px 40px;">
                             <h2 style="color: #1a1a1a; font-size: 22px; font-weight: 700; margin-top: 0;">
-                                ¡Tenés una nueva rutina, {{name}}! ⚡
+                                Actualización de Cuota Mensual 📈
                             </h2>
                             <p style="color: #555555; font-size: 16px; line-height: 1.6; margin-bottom: 25px;">
-                                Tu entrenador ha actualizado tu plan de entrenamiento. Es momento de darlo todo y
-                                superar tus límites.
+                                Hola <strong>{{name}}</strong>, te informamos que a partir del próximo periodo, el valor
+                                de la cuota mensual ha sido actualizado para poder seguir brindándote el mejor servicio
+                                y equipamiento.
                             </p>
 
                             <table border="0" cellpadding="0" cellspacing="0" width="100%"
-                                style="background-color: #1a1a1a; border-radius: 8px;">
+                                style="background-color: #f9f9f9; border-left: 4px solid #ff4444; border-radius: 4px;">
                                 <tr>
-                                    <td style="padding: 25px; text-align: center;">
+                                    <td style="padding: 20px;">
                                         <p
-                                            style="color: #ff4444; font-size: 12px; margin: 0; text-transform: uppercase; font-weight: bold; letter-spacing: 2px;">
-                                            Nuevo Objetivo
+                                            style="color: #1a1a1a; font-size: 14px; margin: 0; text-transform: uppercase; font-weight: bold; letter-spacing: 1px;">
+                                            Nuevo Valor
                                         </p>
-                                        <h3
-                                            style="color: #ffffff; font-size: 24px; margin: 10px 0 0 0; text-transform: capitalize;">
-                                            {{routine_name}}
-                                        </h3>
+                                        <p
+                                            style="color: #1a1a1a; font-size: 24px; font-weight: 800; margin: 10px 0 0 0;">
+                                            ${{new_fee}} <span
+                                                style="font-size: 14px; color: #888888; font-weight: 400;">/ mes</span>
+                                        </p>
                                     </td>
                                 </tr>
                             </table>
+
+                            <p style="color: #666666; font-size: 14px; line-height: 1.6; margin-top: 25px;">
+                                Podés consultar tu estado de cuenta y fechas de vencimiento directamente desde tu
+                                dashboard.
+                            </p>
 
                             <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-top: 35px;">
                                 <tr>
                                     <td align="center">
                                         <a href="{{frontend_url}}/dashboard"
-                                            style="background-color: #ff4444; border-radius: 6px; color: #ffffff; display: inline-block; font-size: 16px; font-weight: bold; padding: 18px 35px; text-decoration: none; text-transform: uppercase;">
-                                            Ver mi entrenamiento
+                                            style="background-color: #1a1a1a; border-radius: 6px; color: #ffffff; display: inline-block; font-size: 16px; font-weight: bold; padding: 18px 35px; text-decoration: none; text-transform: uppercase;">
+                                            Ver mi cuenta
                                         </a>
                                     </td>
                                 </tr>
@@ -77,11 +92,8 @@
                     <tr>
                         <td
                             style="background-color: #f9f9f9; color: #aaaaaa; font-size: 12px; padding: 30px 40px; text-align: center;">
-                            <p style="margin: 0 0 5px 0; font-weight: bold; color: #888888;">
-                                No pain, no gain.
-                            </p>
-                            <p style="margin: 0;">
-                                Gym Control - Baradero
+                            <p style="margin: 0 0 10px 0;">
+                                Gym Control - Gestión de Gimnasios
                             </p>
                         </td>
                     </tr>

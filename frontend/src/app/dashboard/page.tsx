@@ -154,7 +154,7 @@ export default function StudentDashboardPage() {
 
     const stats = [
         { label: "Días Registrados", value: profile?.marked_days || "0", icon: CheckCircle2, color: "text-green-500" },
-        { label: "Vencimiento", value: profile?.expiration_day ? new Date(profile.expiration_day).toLocaleDateString() : "N/D", icon: Calendar, color: "text-rose-500" },
+        { label: "Vencimiento", value: profile?.expiration_day ? new Date(profile.expiration_day).toLocaleDateString('es-AR', { timeZone: 'UTC' }) : "N/D", icon: Calendar, color: "text-rose-500" },
         { label: "Membresía", value: profile?.billing_state === "OK" ? "ACTIVA" : "PENDIENTE", icon: CreditCard, color: profile?.billing_state === "OK" ? "text-blue-500" : "text-amber-500" },
     ];
 

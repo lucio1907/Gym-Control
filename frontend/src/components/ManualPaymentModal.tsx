@@ -26,6 +26,26 @@ export default function ManualPaymentModal({ isOpen, onClose, onSuccess }: Manua
         date: new Date().toISOString().split('T')[0]
     });
 
+    // Fetch default fee from settings
+    useEffect(() => {
+        if (isOpen) {
+            const fetchSettings = async () => {
+                try {
+                    const res = await api.get("/settings");
+                    if (res.data.data.base_fee) {
+                        setFormData(prev => ({
+                            ...prev,
+                            amount: res.data.data.base_fee.toString()
+                        }));
+                    }
+                } catch (err) {
+                    console.error("Error fetching settings", err);
+                }
+            };
+            fetchSettings();
+        }
+    }, [isOpen]);
+
     // Simple search effect
     useEffect(() => {
         if (!searchTerm) {
@@ -180,13 +200,20 @@ export default function ManualPaymentModal({ isOpen, onClose, onSuccess }: Manua
                     <div className="space-y-2">
                         <label className="text-[10px] font-black text-neutral-500 uppercase tracking-widest ml-1">Fecha</label>
                         <div className="relative group/input">
-                            <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-600 group-focus-within/input:text-rose-500 transition-colors" />
+                            <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-600 group-focus-within/input:text-rose-500 transition-colors z-20" />
+
+                            {/* Native picker (Invisible but clickable) */}
                             <input
                                 type="date"
-                                className="input-premium pl-12 text-sm text-neutral-300"
+                                className="absolute inset-0 w-full h-full opacity-0 z-30 cursor-pointer"
                                 value={formData.date}
                                 onChange={(e) => setFormData({ ...formData, date: e.target.value })}
                             />
+
+                            {/* Visual Display (Formatted as DD/MM/YYYY) */}
+                            <div className="input-premium pl-12 text-sm text-neutral-300 flex items-center min-h-[52px]">
+                                {formData.date ? new Date(formData.date + 'T00:00:00').toLocaleDateString('es-AR') : 'Seleccionar Fecha'}
+                            </div>
                         </div>
                     </div>
                 </div>

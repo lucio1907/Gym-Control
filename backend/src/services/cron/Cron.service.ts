@@ -57,7 +57,9 @@ class CronService {
                         gym_name: settings.gym_name,
                         amount: settings.base_fee.toString(),
                         currency: settings.currency === "ARS" ? "$" : "US$"
-                    }
+                    },
+                    settings.gym_sender_name,
+                    settings.gym_email
                 );
             } catch (err) {
                 console.error(`[CRON] Failed to send reminder to ${profile.email}`, err);
@@ -101,7 +103,9 @@ class CronService {
                     {
                         name: profile.name,
                         gym_name: settings.gym_name
-                    }
+                    },
+                    settings.gym_sender_name,
+                    settings.gym_email
                 );
             } catch (err) {
                 console.error(`[CRON] Failed to send debt alert to ${profile.email}`, err);
