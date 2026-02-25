@@ -1,6 +1,6 @@
 "use client";
 
-import { LogOut, LayoutDashboard, User, Dumbbell, Activity, Users, CreditCard, Settings, X } from "lucide-react";
+import { LogOut, LayoutDashboard, User, Dumbbell, Activity, Users, CreditCard, Settings, X, BarChart3 } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
@@ -36,6 +36,7 @@ export default function Sidebar({ role = "STUDENT", userName, isMobile, onMobile
     const adminLinks = [
         { label: "Resumen Hub", icon: LayoutDashboard, href: "/admin" },
         { label: "Alumnos", icon: Users, href: "/admin/students" },
+        { label: "Estadísticas", icon: BarChart3, href: "/admin/statistics" },
         { label: "Pagos y Caja", icon: CreditCard, href: "/admin/payments" },
         { label: "Configuración", icon: Settings, href: "/admin/settings" },
     ];

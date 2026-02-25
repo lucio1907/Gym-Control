@@ -10,6 +10,13 @@ export interface Profile {
     rol: "admin" | "user";
     billing_state: BillingState;
     expiration_day: string | null;
+    plan_id?: string;
+    plan?: {
+        id: string;
+        name: string;
+        price: number;
+        description: string;
+    };
 }
 
 export interface AuthUser {

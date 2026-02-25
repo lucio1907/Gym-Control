@@ -62,3 +62,36 @@ export const getDashboardStats = async (req: Request, res: Response, next: NextF
         next(error);
     }
 }
+
+export const getDetailedAnalytics = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const analytics = await adminService.getDetailedAnalytics();
+        return res.json({ message: 'Detailed business analytics', data: analytics, status: 'OK' });
+    } catch (error) {
+        next(error);
+    }
+}
+
+export const sendSegmentedEmail = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { planId, subject, template, data } = req.body;
+        const results = await adminService.sendSegmentedEmail(planId, subject, template, data);
+        return res.json({ message: 'Segmented emails sent', data: results, status: 'OK' });
+    } catch (error) {
+        next(error);
+    }
+}
+
+export const downloadAtRiskReport = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const csv = await adminService.getAtRiskCSVReport();
+        const date = new Date().toISOString().split('T')[0];
+        
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', `attachment; filename=alumnos_en_riesgo_${date}.csv`);
+        
+        return res.send(csv);
+    } catch (error) {
+        next(error);
+    }
+}

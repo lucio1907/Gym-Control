@@ -3,11 +3,15 @@
 import { useEffect, useState } from "react";
 import DashboardShell from "@/components/DashboardShell";
 import api from "@/lib/api";
-import { User, Building2, Bell, Shield, Download, Trash2, Loader2, Save, LogOut } from "lucide-react";
+import FeedbackModal, { FeedbackType } from "@/components/FeedbackModal";
+import PlanModal from "@/components/PlanModal";
+import PremiumSelect from "@/components/PremiumSelect";
+import DeleteConfirmationModal from "@/components/DeleteConfirmationModal";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { User, Building2, Bell, Shield, Download, Trash2, Loader2, Save, LogOut, Pencil, Plus, DollarSign, Coins } from "lucide-react";
 
-type Tab = "PROFILE" | "GYM" | "NOTIFICATIONS" | "SECURITY";
+type Tab = "PROFILE" | "GYM" | "PLANS" | "NOTIFICATIONS" | "SECURITY";
 
 export default function AdminSettingsPage() {
     const [activeTab, setActiveTab] = useState<Tab>("PROFILE");
@@ -42,13 +46,40 @@ export default function AdminSettingsPage() {
         newPass: ""
     });
 
+    // Plans State
+    const [plans, setPlans] = useState<any[]>([]);
+    const [isPlanModalOpen, setIsPlanModalOpen] = useState(false);
+    const [planToEdit, setPlanToEdit] = useState<any | null>(null);
+
     const [message, setMessage] = useState<{ text: string, type: "success" | "error" } | null>(null);
+
+    // Modals State
+    const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean, planId: string | null, planName: string }>({
+        isOpen: false,
+        planId: null,
+        planName: ""
+    });
+    const [confirmModal, setConfirmModal] = useState<{ isOpen: boolean, plan: any | null }>({
+        isOpen: false,
+        plan: null
+    });
+    const [feedback, setFeedback] = useState<{ isOpen: boolean, type: FeedbackType, title: string, message: string }>({
+        isOpen: false,
+        type: "success",
+        title: "",
+        message: ""
+    });
+
+    const showFeedback = (type: FeedbackType, title: string, message: string) => {
+        setFeedback({ isOpen: true, type, title, message });
+    };
 
     const fetchData = async () => {
         try {
-            const [profileRes, settingsRes] = await Promise.all([
+            const [profileRes, settingsRes, plansRes] = await Promise.all([
                 api.get("/profiles/me"),
-                api.get("/settings")
+                api.get("/settings"),
+                api.get("/plans")
             ]);
 
             const pData = profileRes.data.data;
@@ -73,6 +104,10 @@ export default function AdminSettingsPage() {
                     gym_email: sData.gym_email || "",
                     gym_sender_name: sData.gym_sender_name || ""
                 });
+            }
+
+            if (plansRes?.data?.data) {
+                setPlans(plansRes.data.data);
             }
         } catch (err) {
             console.error("Error fetching data", err);
@@ -144,9 +179,63 @@ export default function AdminSettingsPage() {
         }
     };
 
+    const handleSavePlan = () => {
+        fetchData();
+    };
+
+    const handleDeletePlan = async (id: string, name: string) => {
+        setDeleteModal({ isOpen: true, planId: id, planName: name });
+    };
+
+    const confirmDeletePlan = async () => {
+        if (!deleteModal.planId) return;
+        setIsSaving(true);
+        try {
+            await api.delete(`/plans/${deleteModal.planId}`);
+            showFeedback("success", "Plan Eliminado", "El plan fue removido correctamente.");
+            fetchData();
+        } catch (err) {
+            console.error(err);
+            showFeedback("error", "Error", "No se pudo eliminar el plan.");
+        } finally {
+            setIsSaving(false);
+            setDeleteModal({ isOpen: false, planId: null, planName: "" });
+        }
+    };
+
+    const handleNotifyPlanUpdate = (plan: any) => {
+        setConfirmModal({ isOpen: true, plan });
+    };
+
+    const confirmNotifyUpdate = async () => {
+        const { plan } = confirmModal;
+        if (!plan) return;
+
+        setIsSaving(true);
+        try {
+            await api.post("/admins/send-segmented-email", {
+                planId: plan.id,
+                subject: `Actualización de cuota: ${plan.name}`,
+                template: "fee_notification",
+                data: {
+                    new_fee: plan.price.toString(),
+                    plan_name: plan.name
+                }
+            });
+            showFeedback("success", "Notificaciones Enviadas", `Se notificó a todos los alumnos del plan ${plan.name}.`);
+        } catch (err) {
+            console.error(err);
+            showFeedback("error", "Error", "No se pudieron enviar las notificaciones.");
+        } finally {
+            setIsSaving(false);
+            setConfirmModal({ isOpen: false, plan: null });
+        }
+    };
+
     const tabs = [
         { id: "PROFILE", label: "Mi Perfil", icon: User },
         { id: "GYM", label: "Gimnasio", icon: Building2 },
+        { id: "PLANS", label: "Planes / Membresías", icon: Download },
         { id: "NOTIFICATIONS", label: "Notificaciones", icon: Bell },
         { id: "SECURITY", label: "Seguridad", icon: Shield },
     ];
@@ -322,15 +411,16 @@ export default function AdminSettingsPage() {
 
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                                 <div className="space-y-2">
-                                                    <label className="text-[10px] font-black text-neutral-500 uppercase tracking-widest ml-1">Moneda Principal</label>
-                                                    <select
-                                                        className="input-premium appearance-none text-white"
+                                                    <PremiumSelect
+                                                        label="Moneda Principal"
+                                                        placeholder="Elegir moneda..."
+                                                        options={[
+                                                            { id: "ARS", label: "Peso Argentino", sublabel: "ARS ($)", icon: Coins },
+                                                            { id: "USD", label: "Dólar Estadounidense", sublabel: "USD (US$)", icon: DollarSign }
+                                                        ]}
                                                         value={settingsForm.currency}
-                                                        onChange={(e) => setSettingsForm({ ...settingsForm, currency: e.target.value as "ARS" | "USD" })}
-                                                    >
-                                                        <option value="ARS">ARS ($)</option>
-                                                        <option value="USD">USD (US$)</option>
-                                                    </select>
+                                                        onChange={(val: string) => setSettingsForm({ ...settingsForm, currency: val as "ARS" | "USD" })}
+                                                    />
                                                 </div>
                                                 <div className="space-y-2">
                                                     <label className="text-[10px] font-black text-neutral-500 uppercase tracking-widest ml-1">Cuota Base Por Defecto</label>
@@ -377,6 +467,80 @@ export default function AdminSettingsPage() {
                                                 </button>
                                             </div>
                                         </form>
+                                    </motion.div>
+                                )}
+
+                                {activeTab === "PLANS" && (
+                                    <motion.div
+                                        key="PLANS"
+                                        initial={{ opacity: 0, x: 20 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        exit={{ opacity: 0, x: -20 }}
+                                        transition={{ duration: 0.3 }}
+                                    >
+                                        <div className="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
+                                            <div>
+                                                <h2 className="text-2xl font-black font-outfit uppercase tracking-tighter italic mb-2">Gestión de Planes</h2>
+                                                <p className="text-neutral-500 text-sm font-medium">Definí los tipos de membresía y sus precios.</p>
+                                            </div>
+                                            <button
+                                                onClick={() => {
+                                                    setPlanToEdit(null);
+                                                    setIsPlanModalOpen(true);
+                                                }}
+                                                className="btn-premium px-6 py-4 text-[10px] h-fit uppercase italic tracking-widest flex items-center gap-2"
+                                            >
+                                                <Plus className="h-4 w-4" /> Nuevo Plan
+                                            </button>
+                                        </div>
+
+                                        <div className="space-y-4">
+                                            <h3 className="text-xs font-black uppercase tracking-widest text-neutral-500 mb-4">Planes Activos</h3>
+                                            {plans.length === 0 ? (
+                                                <div className="p-12 border-2 border-dashed border-white/5 rounded-[2rem] text-center">
+                                                    <p className="text-neutral-600 font-bold uppercase tracking-widest text-[10px]">No hay planes configurados todavía.</p>
+                                                </div>
+                                            ) : (
+                                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                                    {plans.map((plan) => (
+                                                        <div key={plan.id} className="glass-card p-6 rounded-3xl border-white/5 hover:border-white/10 transition-all group relative overflow-hidden">
+                                                            <div className="flex justify-between items-start mb-4">
+                                                                <div>
+                                                                    <h4 className="text-sm font-black text-white uppercase italic">{plan.name}</h4>
+                                                                    <p className="text-2xl font-black font-outfit text-rose-500 mt-1">${Number(plan.price).toLocaleString()}</p>
+                                                                </div>
+                                                                <div className="flex gap-1 relative z-10">
+                                                                    <button
+                                                                        onClick={() => {
+                                                                            setPlanToEdit(plan);
+                                                                            setIsPlanModalOpen(true);
+                                                                        }}
+                                                                        className="p-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-neutral-500 hover:text-white transition-colors"
+                                                                    >
+                                                                        <Pencil className="h-3.5 w-3.5" />
+                                                                    </button>
+                                                                    <button
+                                                                        onClick={() => handleDeletePlan(plan.id, plan.name)}
+                                                                        className="p-2.5 rounded-xl bg-white/5 hover:bg-rose-500/10 text-neutral-500 hover:text-rose-500 transition-colors"
+                                                                    >
+                                                                        <Trash2 className="h-3.5 w-3.5" />
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                            <p className="text-[10px] text-neutral-500 font-medium mb-6 line-clamp-2 min-h-[40px]">
+                                                                {plan.description || "Sin descripción adicional."}
+                                                            </p>
+                                                            <button
+                                                                onClick={() => handleNotifyPlanUpdate(plan)}
+                                                                className="w-full py-3 rounded-2xl bg-rose-600/10 border border-rose-500/20 text-rose-500 hover:bg-rose-600 hover:text-white transition-all text-[9px] font-black uppercase tracking-[0.2em] flex items-center justify-center gap-2"
+                                                            >
+                                                                <Bell className="h-3 w-3" /> Notificar aumento
+                                                            </button>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
                                     </motion.div>
                                 )}
 
@@ -515,6 +679,43 @@ export default function AdminSettingsPage() {
                     </div>
                 </div>
             </div>
+            <PlanModal
+                isOpen={isPlanModalOpen}
+                onClose={() => {
+                    setIsPlanModalOpen(false);
+                    setPlanToEdit(null);
+                }}
+                onSuccess={handleSavePlan}
+                plan={planToEdit}
+            />
+
+            <DeleteConfirmationModal
+                isOpen={deleteModal.isOpen}
+                onClose={() => setDeleteModal({ ...deleteModal, isOpen: false })}
+                onConfirm={confirmDeletePlan}
+                isLoading={isSaving}
+                title="Eliminar Plan"
+                message={`¿Estás seguro de que deseas eliminar el plan "${deleteModal.planName}"? Los alumnos asociados quedarán sin plan asignado.`}
+            />
+
+            <FeedbackModal
+                isOpen={confirmModal.isOpen}
+                onClose={() => setConfirmModal({ ...confirmModal, isOpen: false })}
+                onConfirm={confirmNotifyUpdate}
+                type="confirm"
+                title="Notificación de Aumento"
+                message={`¿Deseas enviar un correo a todos los alumnos suscritos al plan "${confirmModal.plan?.name}" notificando la actualización del precio a $${Number(confirmModal.plan?.price).toLocaleString()}?`}
+                confirmText="Enviar Notificación"
+                isLoading={isSaving}
+            />
+
+            <FeedbackModal
+                isOpen={feedback.isOpen}
+                onClose={() => setFeedback(prev => ({ ...prev, isOpen: false }))}
+                type={feedback.type}
+                title={feedback.title}
+                message={feedback.message}
+            />
         </DashboardShell>
     );
 }

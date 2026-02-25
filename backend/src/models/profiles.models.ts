@@ -58,6 +58,10 @@ const ProfileModel = sequelizeConfig.define("profile", {
   recovery_token_expires: {
     type: DataTypes.DATE,
     allowNull: true,
+  },
+  plan_id: {
+    type: DataTypes.STRING,
+    allowNull: true,
   }
 }, {
   paranoid: true,

@@ -7,7 +7,7 @@ import checkAdminSession from "../../middlewares/checkAdminSession.middleware";
 
 const router = Router();
 
-router.post("/register", validatorMiddleware(RegisterSchema), registerProfile);
+router.post("/register", checkSession, checkAdminSession, validatorMiddleware(RegisterSchema), registerProfile);
 router.post("/login", validatorMiddleware(LoginSchema), loginProfile);
 router.post("/logout", checkSession, logoutProfile);
 

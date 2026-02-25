@@ -25,7 +25,9 @@ Este es el backend oficial de **Gym Control**, una plataforma integral para la g
     - Sistema anti-spam (Cooldown de 2 minutos).
 - **Billing Automation**: 
     - **Cron Job**: Proceso automático diario para actualizar estados de pago.
-    - **Real-time Blocking**: Bloqueo instantáneo si la fecha de vencimiento ha pasado, incluso antes de que corra el cron.
+    - **Real-time Blocking**: Bloqueo instantáneo si la fecha de vencimiento ha pasado.
+- **Motor de Analíticas**: Cálculos optimizados para Crecimiento Neto, Mora y Proyecciones financieras.
+- **Flujo de Registro Extendido**: Retorno de perfiles completos para facilitar la integración con flujos de cobro automatizados.
 - **Seguridad**: Middlewares de protección de rutas basados en roles y sesiones seguras mediante cookies.
 
 ---

@@ -11,6 +11,7 @@ import { supabase } from "@/lib/supabase";
 import AddStudentModal from "@/components/AddStudentModal";
 import DeleteConfirmationModal from "@/components/DeleteConfirmationModal";
 import FeedbackModal, { FeedbackType } from "@/components/FeedbackModal";
+import ManualPaymentModal from "@/components/ManualPaymentModal";
 
 export default function AdminStudentsPage() {
     const router = useRouter();
@@ -22,6 +23,8 @@ export default function AdminStudentsPage() {
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [studentToDelete, setStudentToDelete] = useState<any | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
+    const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+    const [studentForPayment, setStudentForPayment] = useState<any | null>(null);
     const [feedback, setFeedback] = useState<{
         isOpen: boolean;
         type: FeedbackType;
@@ -89,6 +92,14 @@ export default function AdminStudentsPage() {
         }
     }, [studentToDelete, fetchStudents, showFeedback]);
 
+    const handleRegistrationSuccess = useCallback((newStudent?: any) => {
+        fetchStudents();
+        if (newStudent) {
+            setStudentForPayment(newStudent);
+            setIsPaymentModalOpen(true);
+        }
+    }, [fetchStudents]);
+
     const filteredStudents = useMemo(() => {
         const query = search.toLowerCase();
         return students.filter(s =>
@@ -144,7 +155,8 @@ export default function AdminStudentsPage() {
                         <thead className="border-b border-white/5 bg-white/[0.02]">
                             <tr className="font-outfit text-white uppercase tracking-widest text-[9px] md:text-[10px]">
                                 <th className="px-8 py-8 font-black">Alumno</th>
-                                <th className="px-6 py-8 font-black">DNI / Identificación</th>
+                                <th className="px-6 py-8 font-black">Identificación</th>
+                                <th className="px-6 py-8 font-black">Plan</th>
                                 <th className="px-6 py-8 font-black">Estado Pago</th>
                                 <th className="px-8 py-8 text-right font-black">Acciones</th>
                             </tr>
@@ -178,6 +190,16 @@ export default function AdminStudentsPage() {
                                         </td>
                                         <td className="px-6 py-6 whitespace-nowrap">
                                             <p className="text-xs md:text-sm font-black font-outfit text-neutral-300">{student.dni}</p>
+                                        </td>
+                                        <td className="px-6 py-6 whitespace-nowrap">
+                                            {student.plan ? (
+                                                <div className="flex flex-col">
+                                                    <p className="text-xs font-black text-rose-500 uppercase tracking-tighter italic">{student.plan.name}</p>
+                                                    <p className="text-[10px] font-bold text-neutral-600">${Number(student.plan.price).toLocaleString()}</p>
+                                                </div>
+                                            ) : (
+                                                <p className="text-[10px] font-black text-neutral-600 uppercase italic">Sin plan asignado</p>
+                                            )}
                                         </td>
                                         <td className="px-6 py-6 font-outfit">
                                             {(() => {
@@ -263,8 +285,21 @@ export default function AdminStudentsPage() {
                     setIsAddModalOpen(false);
                     setStudentToEdit(null);
                 }}
-                onSuccess={fetchStudents}
+                onSuccess={handleRegistrationSuccess}
                 student={studentToEdit}
+            />
+
+            <ManualPaymentModal
+                isOpen={isPaymentModalOpen}
+                onClose={() => {
+                    setIsPaymentModalOpen(false);
+                    setStudentForPayment(null);
+                }}
+                onSuccess={() => {
+                    fetchStudents();
+                    showFeedback("success", "Pago Registrado", "El alumno ya se encuentra al día.");
+                }}
+                initialStudent={studentForPayment}
             />
 
             <DeleteConfirmationModal

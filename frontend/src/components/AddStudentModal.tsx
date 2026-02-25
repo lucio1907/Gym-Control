@@ -7,11 +7,13 @@ import Modal from "./Modal";
 import api from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { validateEmail, validatePassword, validateName, validatePhone, validateDNI } from "@/lib/validations";
+import PremiumSelect from "./PremiumSelect";
+import { Zap } from "lucide-react";
 
 interface AddStudentModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSuccess: () => void;
+    onSuccess: (student?: any) => void;
     student?: Profile; // If provided, the modal acts as an Edit modal
 }
 
@@ -26,24 +28,38 @@ export default function AddStudentModal({ isOpen, onClose, onSuccess, student }:
         email: student?.email || "",
         password: "gymcontrol123", // Default for new, not used for edit
         phone: student?.phone || "",
-        dni: student?.dni || ""
+        dni: student?.dni || "",
+        plan_id: student?.plan_id || ""
     });
+
+    const [plans, setPlans] = useState<any[]>([]);
+
+    const fetchPlans = useCallback(async () => {
+        try {
+            const res = await api.get("/plans");
+            setPlans(res.data.data);
+        } catch (err) {
+            console.error("Error fetching plans:", err);
+        }
+    }, []);
 
     // Reset form when student changes or modal opens
     useEffect(() => {
         if (isOpen) {
+            fetchPlans();
             setFormData({
                 name: student?.name || "",
                 lastname: student?.lastname || "",
                 email: student?.email || "",
                 password: "gymcontrol123",
                 phone: student?.phone || "",
-                dni: student?.dni || ""
+                dni: student?.dni || "",
+                plan_id: (student as any)?.plan_id || ""
             });
             setError(null);
             setFieldErrors({});
         }
-    }, [isOpen, student]);
+    }, [isOpen, student, fetchPlans]);
 
     const handleSubmit = useCallback(async (e: React.FormEvent) => {
         e.preventDefault();
@@ -69,11 +85,12 @@ export default function AddStudentModal({ isOpen, onClose, onSuccess, student }:
                 // Edit mode
                 const { password, ...updateData } = formData;
                 await api.put(`/profiles/${student.id}`, updateData);
+                onSuccess();
             } else {
                 // Create mode
-                await api.post("/profiles/register", formData);
+                const res = await api.post("/profiles/register", formData);
+                onSuccess(res.data.user);
             }
-            onSuccess();
             onClose();
         } catch (err: any) {
             setError(err.response?.data?.message || "Error al procesar la solicitud.");
@@ -87,9 +104,9 @@ export default function AddStudentModal({ isOpen, onClose, onSuccess, student }:
             isOpen={isOpen}
             onClose={onClose}
             title={student ? "Editar Alumno" : "Nuevo Ingreso"}
-            className="max-w-xl"
+            className="max-w-xl overflow-visible"
         >
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-6 overflow-visible">
                 {/* ... existing fields ... */}
                 {error && (
                     <div className="bg-rose-500/10 border border-rose-500/20 rounded-2xl p-4 text-rose-500 text-xs font-bold">
@@ -150,7 +167,11 @@ export default function AddStudentModal({ isOpen, onClose, onSuccess, student }:
                                 placeholder="3416000123"
                                 className={cn("input-premium pl-12 text-sm", fieldErrors.phone && "border-rose-500/50 bg-rose-500/5")}
                                 value={formData.phone}
-                                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                                inputMode="numeric"
+                                onChange={(e) => {
+                                    const val = e.target.value.replace(/\D/g, '');
+                                    setFormData({ ...formData, phone: val });
+                                }}
                             />
                         </div>
                         {fieldErrors.phone && <p className="text-[9px] text-rose-500 font-bold ml-1">{fieldErrors.phone}</p>}
@@ -164,11 +185,31 @@ export default function AddStudentModal({ isOpen, onClose, onSuccess, student }:
                                 placeholder="10101010"
                                 className={cn("input-premium pl-12 text-sm", fieldErrors.dni && "border-rose-500/50 bg-rose-500/5")}
                                 value={formData.dni}
-                                onChange={(e) => setFormData({ ...formData, dni: e.target.value })}
+                                inputMode="numeric"
+                                onChange={(e) => {
+                                    const val = e.target.value.replace(/\D/g, '');
+                                    setFormData({ ...formData, dni: val });
+                                }}
                             />
                         </div>
                         {fieldErrors.dni && <p className="text-[9px] text-rose-500 font-bold ml-1">{fieldErrors.dni}</p>}
                     </div>
+                </div>
+
+                <div className="space-y-2">
+                    <PremiumSelect
+                        label="Plan de Membresía"
+                        placeholder="Seleccionar un plan..."
+                        options={plans.map(p => ({
+                            id: p.id,
+                            label: p.name,
+                            sublabel: `$${Number(p.price).toLocaleString()} / mes`,
+                            icon: Zap
+                        }))}
+                        value={formData.plan_id}
+                        onChange={(val) => setFormData({ ...formData, plan_id: val })}
+                        error={fieldErrors.plan_id}
+                    />
                 </div>
 
                 <div className="pt-4">

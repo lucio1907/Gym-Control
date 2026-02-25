@@ -8,9 +8,11 @@
 
 ### 🏢 Panel de Administración
 - Gestión total de alumnos y membresías.
-- Control de caja y visualización de estadísticas.
-- Generación de rutinas personalizadas.
-- Notificaciones internas con diseño premium.
+- **Business Intelligence**: Gráficos de crecimiento neto, mapas de calor de asistencia y control de morosidad en tiempo real.
+- **Optimización Crítica**: Aceleración por GPU para efectos visuales complejos y renderizado inteligente (`content-visibility`) para alto rendimiento en listas largas.
+- Generación de rutinas personalizadas con diseño premium.
+- Notificaciones internas dinámicas.
+- **Flujo Automatizado**: Proceso "Registro -> Cobro" integrado para agilizar la administración.
 
 ### 📱 Dashboard del Alumno
 - Acceso táctil y visual a rutinas asignadas.

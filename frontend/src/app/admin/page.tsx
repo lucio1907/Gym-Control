@@ -22,6 +22,15 @@ export default function AdminDashboardPage() {
     // Modals state
     const [isAddStudentOpen, setIsAddStudentOpen] = useState(false);
     const [isManualPaymentOpen, setIsManualPaymentOpen] = useState(false);
+    const [studentForPayment, setStudentForPayment] = useState<any | null>(null);
+
+    const handleRegistrationSuccess = (newStudent?: any) => {
+        fetchData();
+        if (newStudent) {
+            setStudentForPayment(newStudent);
+            setIsManualPaymentOpen(true);
+        }
+    };
 
     const fetchData = async () => {
         setIsLoading(true);
@@ -261,13 +270,17 @@ export default function AdminDashboardPage() {
             <AddStudentModal
                 isOpen={isAddStudentOpen}
                 onClose={() => setIsAddStudentOpen(false)}
-                onSuccess={fetchData}
+                onSuccess={handleRegistrationSuccess}
             />
 
             <ManualPaymentModal
                 isOpen={isManualPaymentOpen}
-                onClose={() => setIsManualPaymentOpen(false)}
+                onClose={() => {
+                    setIsManualPaymentOpen(false);
+                    setStudentForPayment(null);
+                }}
                 onSuccess={fetchData}
+                initialStudent={studentForPayment}
             />
         </DashboardShell>
     );

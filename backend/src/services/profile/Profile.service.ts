@@ -12,6 +12,7 @@ import emailService from "../emails/email.service";
 import settingsService from "../settings/Settings.service";
 import { formatDateDayMonthYear } from "../../utils/formatDate.utils";
 import calculateBillingDate from "../../utils/billingDate.utils";
+import PlanModel from "../../models/plans.models";
 
 interface RegisterBody {
     name: string;
@@ -20,6 +21,7 @@ interface RegisterBody {
     password: string;
     phone: string;
     dni: string;
+    plan_id?: string;
 }
 
 interface LoginBody {
@@ -35,6 +37,7 @@ interface UpdateProfileData {
     dni?: string;
     billing_state?: "OK" | "defeated" | "pending";
     expiration_day?: Date;
+    plan_id?: string;
 }
 
 class ProfileService extends BaseService<Model> {
@@ -43,7 +46,7 @@ class ProfileService extends BaseService<Model> {
     }
 
     public register = async (body: RegisterBody) => {
-        const { name, lastname, email, password, phone, dni } = body;
+        const { name, lastname, email, password, phone, dni, plan_id } = body;
 
         const exists = await this.collection.findOne({ where: { email } });
         if (exists) throw new BadRequestException(`User with email ${email} already exists`);
@@ -63,6 +66,7 @@ class ProfileService extends BaseService<Model> {
             rol: "user",
             billing_state: "pending",
             expiration_day: null,
+            plan_id,
             recovery_token: recoveryToken,
             recovery_token_expires: expires
         });
@@ -84,15 +88,7 @@ class ProfileService extends BaseService<Model> {
         );
 
         return {
-            user: {
-                name,
-                lastname,
-                email,
-                phone,
-                dni,
-                rol: "user",
-                expirationDay: calculateBillingDate(new Date()),
-            },
+            user: newProfile
         };
     };
 
@@ -133,7 +129,8 @@ class ProfileService extends BaseService<Model> {
 
     public getMe = async (id: string) => {
         const profile = await this.collection.findByPk(id, {
-            attributes: { exclude: ["password", "recovery_token", "recovery_token_expires"] }
+            attributes: { exclude: ["password", "recovery_token", "recovery_token_expires"] },
+            include: [{ model: PlanModel, as: "plan" }]
         });
         if (!profile) throw new NotFoundException("Profile not found");
         return profile;
@@ -141,13 +138,15 @@ class ProfileService extends BaseService<Model> {
 
     public getAll = async () => {
         return await this.collection.findAll({
-            attributes: { exclude: ["password", "recovery_token", "recovery_token_expires"] }
+            attributes: { exclude: ["password", "recovery_token", "recovery_token_expires"] },
+            include: [{ model: PlanModel, as: "plan" }]
         });
     };
 
     public getById = async (id: string) => {
         const profile = await this.collection.findByPk(id, {
-            attributes: { exclude: ["password", "recovery_token", "recovery_token_expires"] }
+            attributes: { exclude: ["password", "recovery_token", "recovery_token_expires"] },
+            include: [{ model: PlanModel, as: "plan" }]
         });
         if (!profile) throw new NotFoundException("Profile not found");
         return profile;

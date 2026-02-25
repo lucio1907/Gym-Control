@@ -1,7 +1,7 @@
 import { Router } from "express";
 import checkAdminSession from "../../middlewares/checkAdminSession.middleware";
 import checkSession from "../../middlewares/checkSession.middleware";
-import { createAdmin, deleteAdmin, getAdmins, getDashboardStats, loginAdmin, updateAdmin } from "../../controllers/admins.controller";
+import { createAdmin, deleteAdmin, downloadAtRiskReport, getAdmins, getDashboardStats, getDetailedAnalytics, loginAdmin, sendSegmentedEmail, updateAdmin } from "../../controllers/admins.controller";
 import validatorMiddleware from "../../middlewares/validatorsMiddleware.middleware";
 import { LoginSchema, RegisterSchema } from "../../validators/validators";
 
@@ -12,6 +12,9 @@ router.get('/get-admins', checkSession, checkAdminSession, getAdmins);
 router.post('/create-admin', checkSession, checkAdminSession, validatorMiddleware(RegisterSchema), createAdmin);
 router.post('/login-admin', validatorMiddleware(LoginSchema), loginAdmin);
 router.get('/stats', checkSession, checkAdminSession, getDashboardStats);
+router.get('/analytics', checkSession, checkAdminSession, getDetailedAnalytics);
+router.post('/send-segmented-email', checkSession, checkAdminSession, sendSegmentedEmail);
+router.get('/reports/at-risk', checkSession, checkAdminSession, downloadAtRiskReport);
 
 router.put('/update-admin/:id', checkSession, checkAdminSession, updateAdmin);
 
