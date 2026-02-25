@@ -1,16 +1,9 @@
 import { NextFunction, Request, Response } from "express";
-import registerProfileService from "../services/profile/RegisterProfile.service";
-import loginProfileService from "../services/profile/LoginProfile.service";
-import forgotPasswordService from "../services/profile/ForgotPassword.service";
-import resetPasswordService from "../services/profile/ResetPassword.service";
-import getProfileService from "../services/profile/GetProfile.service";
-import updateProfileService from "../services/profile/UpdateProfile.service";
-import deleteProfileService from "../services/profile/DeleteProfile.service";
-import changePasswordService from "../services/profile/ChangePassword.service";
+import profileService from "../services/profile/Profile.service";
 
 export const registerProfile = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const newProfile = await registerProfileService.register(req.body);
+        const newProfile = await profileService.register(req.body);
         return res.status(201).json({ message: 'User created successfully', user: newProfile.user, status: "Created" })
     } catch (error) {
         next(error);
@@ -19,7 +12,7 @@ export const registerProfile = async (req: Request, res: Response, next: NextFun
 
 export const loginProfile = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const authUser = await loginProfileService.login(req.body);
+        const authUser = await profileService.login(req.body);
 
         res.cookie("access_token", authUser?.access_token, {
             httpOnly: true,
@@ -36,7 +29,7 @@ export const loginProfile = async (req: Request, res: Response, next: NextFuncti
 
 export const forgotPassword = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const result = await forgotPasswordService.forgotPassword(req.body.email);
+        const result = await profileService.forgotPassword(req.body.email);
         return res.json(result);
     } catch (error) {
         next(error);
@@ -45,7 +38,7 @@ export const forgotPassword = async (req: Request, res: Response, next: NextFunc
 
 export const resetPassword = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const result = await resetPasswordService.resetPassword(req.body);
+        const result = await profileService.resetPassword(req.body.token, req.body.newPassword);
         return res.json(result);
     } catch (error) {
         next(error);
@@ -55,7 +48,7 @@ export const resetPassword = async (req: Request, res: Response, next: NextFunct
 export const getMe = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const userId = (req as any).user.id;
-        const profile = await getProfileService.getMe(userId);
+        const profile = await profileService.getMe(userId);
         return res.json({ message: "User profile info", data: profile, status: "OK" });
     } catch (error) {
         next(error);
@@ -77,7 +70,7 @@ export const logoutProfile = async (req: Request, res: Response, next: NextFunct
 
 export const getAllProfiles = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const profiles = await getProfileService.getAll();
+        const profiles = await profileService.getAll();
         return res.json({ message: "All profiles info", data: profiles, status: "OK" });
     } catch (error) {
         next(error);
@@ -87,7 +80,7 @@ export const getAllProfiles = async (req: Request, res: Response, next: NextFunc
 export const getProfileById = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const id = req.params.id as string;
-        const profile = await getProfileService.getById(id);
+        const profile = await profileService.getById(id);
         return res.json({ message: "Profile info", data: profile, status: "OK" });
     } catch (error) {
         next(error);
@@ -104,7 +97,7 @@ export const updateProfile = async (req: Request, res: Response, next: NextFunct
             return res.status(403).json({ message: "No tenés permiso para modificar este perfil.", status: "Forbidden" });
         }
 
-        const updatedProfile = await updateProfileService.update(id, req.body);
+        const updatedProfile = await profileService.update(id, req.body);
         return res.json({ message: "Profile updated successfully", data: updatedProfile, status: "OK" });
     } catch (error) {
         next(error);
@@ -114,7 +107,7 @@ export const updateProfile = async (req: Request, res: Response, next: NextFunct
 export const deleteProfile = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const id = req.params.id as string;
-        await deleteProfileService.delete(id);
+        await profileService.delete(id);
         return res.json({ message: "Profile deleted successfully", status: "OK" });
     } catch (error) {
         next(error);
@@ -124,7 +117,7 @@ export const deleteProfile = async (req: Request, res: Response, next: NextFunct
 export const changePassword = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const id = (req as any).user.id;
-        await changePasswordService.changePassword(id, req.body);
+        await profileService.changePassword(id, req.body);
         return res.json({ message: "Password updated successfully", status: "OK" });
     } catch (error) {
         next(error);
