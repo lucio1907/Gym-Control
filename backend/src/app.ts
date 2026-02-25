@@ -11,10 +11,17 @@ app.use(express.json());
 app.use(
   cors({
     origin: (origin, callback) => {
-      const allowedOrigin = process.env.FRONTEND_URL || "http://localhost:3000";
-      if (!origin || origin.replace(/\/$/, "") === allowedOrigin.replace(/\/$/, "")) {
+      const whitelist = [
+        process.env.FRONTEND_URL,
+        "http://localhost:3000",
+        "http://localhost:5173",
+        "http://localhost:8080",
+      ].filter(Boolean).map(url => url!.replace(/\/$/, ""));
+
+      if (!origin || whitelist.includes(origin.replace(/\/$/, ""))) {
         callback(null, true);
       } else {
+        console.error(`[CORS] Acceso denegado para el origen: ${origin}`);
         callback(new Error("No permitido por CORS"));
       }
     },
