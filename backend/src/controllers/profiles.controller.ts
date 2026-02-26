@@ -123,3 +123,55 @@ export const changePassword = async (req: Request, res: Response, next: NextFunc
         next(error);
     }
 };
+
+export const getAssignedStudents = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const teacherId = (req as any).user.id;
+        const students = await profileService.getAssignedStudents(teacherId);
+        return res.json({ message: "Assigned students info", data: students, status: "OK" });
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const claimStudent = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const teacherId = (req as any).user.id;
+        const { identifier } = req.body;
+        
+        if (!identifier) {
+            return res.status(400).json({ message: "Identificador (Email o DNI) requerido", status: "Bad Request" });
+        }
+
+        const student = await profileService.claimStudent(teacherId, identifier);
+        return res.json({ 
+            message: "Alumno vinculado correctamente", 
+            data: student, 
+            status: "OK" 
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const searchUnlinkedStudents = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { query } = req.query;
+        if (!query) return res.json({ data: [] });
+        
+        const students = await profileService.searchUnlinkedStudents(query as string);
+        return res.json({ data: students, status: "OK" });
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const getTeacherStats = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const user = (req as any).user;
+        const stats = await profileService.getTeacherStats(user.id);
+        return res.json({ data: stats, status: "OK" });
+    } catch (error) {
+        next(error);
+    }
+};

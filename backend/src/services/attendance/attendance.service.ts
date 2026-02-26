@@ -27,6 +27,11 @@ class AttendanceService extends BaseService<Model> {
         
         if (!profile) throw new NotFoundException('Perfil no encontrado');
 
+        // Teachers (and Admins) skip billing checks
+        if (profile.dataValues.rol === 'teacher' || profile.dataValues.rol === 'admin') {
+            return profile;
+        }
+
         const now = new Date();
         const expirationDay = profile.dataValues.expiration_day;
 
@@ -158,7 +163,8 @@ class AttendanceService extends BaseService<Model> {
                 profile: {
                     name: profile.dataValues.name,
                     lastname: profile.dataValues.lastname,
-                    marked_days: profile.dataValues.marked_days
+                    marked_days: profile.dataValues.marked_days,
+                    rol: profile.dataValues.rol
                 }
             };
         }

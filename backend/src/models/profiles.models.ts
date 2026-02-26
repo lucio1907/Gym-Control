@@ -25,7 +25,7 @@ const ProfileModel = sequelizeConfig.define("profile", {
     allowNull: false,
   },
   rol: {
-    type: DataTypes.ENUM("admin", "user"),
+    type: DataTypes.ENUM("admin", "user", "teacher"),
     defaultValue: "user",
     allowNull: false,
   },
@@ -60,6 +60,10 @@ const ProfileModel = sequelizeConfig.define("profile", {
     allowNull: true,
   },
   plan_id: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
+  teacher_id: {
     type: DataTypes.STRING,
     allowNull: true,
   }

@@ -13,6 +13,8 @@ import settingsService from "../settings/Settings.service";
 import { formatDateDayMonthYear } from "../../utils/formatDate.utils";
 import calculateBillingDate from "../../utils/billingDate.utils";
 import PlanModel from "../../models/plans.models";
+import RoutinesModel from "../../models/routines.models";
+import AttendanceModel from "../../models/attendance.models";
 
 interface RegisterBody {
     name: string;
@@ -22,6 +24,8 @@ interface RegisterBody {
     phone: string;
     dni: string;
     plan_id?: string;
+    teacher_id?: string;
+    rol?: "admin" | "user" | "teacher";
 }
 
 interface LoginBody {
@@ -38,6 +42,7 @@ interface UpdateProfileData {
     billing_state?: "OK" | "defeated" | "pending";
     expiration_day?: Date;
     plan_id?: string;
+    teacher_id?: string;
 }
 
 class ProfileService extends BaseService<Model> {
@@ -46,7 +51,7 @@ class ProfileService extends BaseService<Model> {
     }
 
     public register = async (body: RegisterBody) => {
-        const { name, lastname, email, password, phone, dni, plan_id } = body;
+        const { name, lastname, email, password, phone, dni, plan_id, teacher_id, rol = "user" } = body;
 
         const exists = await this.collection.findOne({ where: { email } });
         if (exists) throw new BadRequestException(`User with email ${email} already exists`);
@@ -63,10 +68,11 @@ class ProfileService extends BaseService<Model> {
             password: await hashPassword(password),
             phone,
             dni,
-            rol: "user",
+            rol,
             billing_state: "pending",
             expiration_day: null,
             plan_id,
+            teacher_id,
             recovery_token: recoveryToken,
             recovery_token_expires: expires
         });
@@ -74,10 +80,15 @@ class ProfileService extends BaseService<Model> {
         const settings = await settingsService.getSettings() as any;
         const activationUrl = `${process.env.FRONTEND_URL}/reset-password?token=${recoveryToken}`;
 
+        // Determinar plantilla y asunto según el rol
+        const isTeacher = rol === "teacher";
+        const emailSubject = isTeacher ? "¡Bienvenido al equipo de Gym Control! 🤝" : "¡Bienvenido al Gym!";
+        const emailTemplate = isTeacher ? "teacher_welcome" : "welcome";
+
         await emailService.sendEmail(
             email,
-            "¡Bienvenido al Gym!",
-            "welcome",
+            emailSubject,
+            emailTemplate,
             {
                 name,
                 expiration_day: formatDateDayMonthYear(newProfile.dataValues.expiration_day),
@@ -219,6 +230,135 @@ class ProfileService extends BaseService<Model> {
         await user.save();
 
         return { message: "Password updated successfully" };
+    };
+
+    public getAssignedStudents = async (teacherId: string) => {
+        const students = await this.collection.findAll({
+            where: { teacher_id: teacherId, rol: "user" },
+            attributes: { exclude: ["password", "recovery_token", "recovery_token_expires"] },
+            include: [{ model: PlanModel, as: "plan" }]
+        });
+
+        const studentIds = students.map((s: any) => s.id);
+
+        const activeRoutines = await RoutinesModel.findAll({
+            where: {
+                profile_id: studentIds,
+                is_active: true
+            },
+            attributes: ["profile_id"]
+        });
+
+        const studentsWithActiveRoutine = new Set(activeRoutines.map((r: any) => r.get("profile_id")));
+
+        return students.map((s: any) => {
+            const studentData = s.toJSON();
+            studentData.has_active_routine = studentsWithActiveRoutine.has(s.id);
+            return studentData;
+        });
+    };
+
+    public claimStudent = async (teacherId: string, identifier: string) => {
+        const student: any = await this.collection.findOne({
+            where: {
+                [Op.and]: [
+                    { rol: "user" },
+                    {
+                        [Op.or]: [
+                            { dni: identifier },
+                            { email: identifier }
+                        ]
+                    }
+                ]
+            }
+        });
+
+        if (!student) throw new NotFoundException("Servicio: Alumno no encontrado");
+
+        if (student.teacher_id) {
+            if (student.teacher_id === teacherId) {
+                throw new BadRequestException("Este alumno ya está asignado a vos.");
+            }
+            throw new BadRequestException("Este alumno ya tiene otro profesor asignado.");
+        }
+
+        student.teacher_id = teacherId;
+        await student.save();
+
+        return student;
+    };
+
+    public searchUnlinkedStudents = async (query: string) => {
+        return await this.collection.findAll({
+            where: {
+                rol: "user",
+                teacher_id: null,
+                [Op.or]: [
+                    { name: { [Op.iLike]: `%${query}%` } },
+                    { lastname: { [Op.iLike]: `%${query}%` } },
+                    { dni: { [Op.iLike]: `%${query}%` } }
+                ]
+            },
+            attributes: ["id", "name", "lastname", "dni", "email"],
+            limit: 10
+        });
+    };
+
+    public getTeacherStats = async (teacherId: string) => {
+        const students = await this.collection.findAll({
+            where: { teacher_id: teacherId, rol: "user" },
+            attributes: ["id", "name", "lastname"]
+        });
+
+        const studentIds = students.map((s: any) => s.id);
+
+        // 1. Total Students
+        const totalStudents = students.length;
+
+        // 2. Students without active routines
+        const activeRoutines = await RoutinesModel.findAll({
+            where: {
+                profile_id: studentIds,
+                is_active: true
+            },
+            attributes: ["profile_id"]
+        });
+        const studentsWithActiveRoutine = new Set(activeRoutines.map((r: any) => r.get("profile_id")));
+        const studentsWithoutRoutine = totalStudents - studentsWithActiveRoutine.size;
+
+        // 3. Recent Attendance (Last 7 days)
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+        
+        const recentAttendance = await AttendanceModel.count({
+            distinct: true,
+            col: "profile_id",
+            where: {
+                profile_id: studentIds,
+                check_in_time: { [Op.gte]: sevenDaysAgo }
+            }
+        });
+
+        // 4. Routine Health (Updates in last 30 days)
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        const updatedRoutines = await RoutinesModel.count({
+            distinct: true,
+            col: "profile_id",
+            where: {
+                profile_id: studentIds,
+                is_active: true,
+                updatedAt: { [Op.gte]: thirtyDaysAgo }
+            }
+        });
+
+        return {
+            totalStudents,
+            studentsWithoutRoutine,
+            recentAttendance,
+            updatedRoutines, // Count of students with recent routine updates
+            healthPercentage: totalStudents > 0 ? Math.round((updatedRoutines / totalStudents) * 100) : 0
+        };
     };
 }
 

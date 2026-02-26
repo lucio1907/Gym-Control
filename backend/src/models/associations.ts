@@ -44,3 +44,13 @@ ProfileModel.belongsTo(PlanModel, {
     foreignKey: "plan_id",
     as: "plan",
 });
+
+// Teacher can have many students
+ProfileModel.hasMany(ProfileModel, {
+    foreignKey: "teacher_id",
+    as: "students",
+});
+ProfileModel.belongsTo(ProfileModel, {
+    foreignKey: "teacher_id",
+    as: "teacher",
+});

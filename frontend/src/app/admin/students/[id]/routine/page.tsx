@@ -16,6 +16,7 @@ export default function StudentRoutinePage({ params }: { params: Promise<{ id: s
     const router = useRouter();
 
     const [student, setStudent] = useState<any>(null);
+    const [currentUser, setCurrentUser] = useState<any>(null);
 
     const [feedback, setFeedback] = useState<{
         isOpen: boolean;
@@ -114,8 +115,12 @@ export default function StudentRoutinePage({ params }: { params: Promise<{ id: s
         try {
             console.log("FETCHING DATA FOR STUDENT:", studentId);
             setIsLoading(true);
-            const studentRes = await api.get(`/profiles/${studentId}`);
+            const [studentRes, meRes] = await Promise.all([
+                api.get(`/profiles/${studentId}`),
+                api.get("/profiles/me")
+            ]);
             setStudent(studentRes.data.data);
+            setCurrentUser(meRes.data.data);
 
             const routinesRes = await api.get(`/routines/profile/${studentId}`);
             const routines = routinesRes.data.data || [];
@@ -338,7 +343,7 @@ export default function StudentRoutinePage({ params }: { params: Promise<{ id: s
     const exercises = activeRoutine?.routine_content?.days?.GENERAL || [];
 
     return (
-        <DashboardShell role="ADMIN">
+        <DashboardShell role={currentUser?.rol?.toUpperCase()} userName={currentUser?.name}>
             <motion.header
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -347,7 +352,7 @@ export default function StudentRoutinePage({ params }: { params: Promise<{ id: s
                 <div className="flex flex-col gap-6">
                     <button onClick={() => router.back()} className="flex items-center gap-2 text-neutral-500 hover:text-rose-500 transition-all font-black text-[9px] uppercase tracking-[0.3em] group">
                         <ArrowLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform" />
-                        VOLVER A ALUMNOS
+                        VOLVER A {currentUser?.rol === 'teacher' ? 'MIS ALUMNOS' : 'ALUMNOS'}
                     </button>
                     <div>
                         <div className="flex items-center gap-3 mb-4">
@@ -377,10 +382,10 @@ export default function StudentRoutinePage({ params }: { params: Promise<{ id: s
                         </button>
                     )}
                     <button
-                        onClick={() => router.push(`/admin/students/${studentId}`)}
+                        onClick={() => router.push(currentUser?.rol === 'teacher' ? '/teacher/students' : '/admin/students')}
                         className="bg-white/5 hover:bg-white/10 text-neutral-400 hover:text-white px-6 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all border border-white/5"
                     >
-                        VOLVER AL PERFIL
+                        VOLVER AL LISTADO
                     </button>
                     <button
                         onClick={handleNotifyStudent}

@@ -1,73 +1,50 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Profile } from "@/types/profiles";
-import { Loader2, Plus, User, Mail, Phone, Lock, Hash, CheckCircle2 } from "lucide-react";
+import { Loader2, Plus, User, Mail, Phone, Hash, CheckCircle2 } from "lucide-react";
 import Modal from "./Modal";
 import api from "@/lib/api";
 import { cn } from "@/lib/utils";
-import { validateEmail, validatePassword, validateName, validatePhone, validateDNI } from "@/lib/validations";
-import PremiumSelect from "./PremiumSelect";
-import { Zap } from "lucide-react";
+import { validateEmail, validateName, validatePhone, validateDNI } from "@/lib/validations";
 
-interface AddStudentModalProps {
+interface AddTeacherModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSuccess: (student?: any) => void;
-    student?: Profile; // If provided, the modal acts as an Edit modal
+    onSuccess: (teacher?: any) => void;
+    teacher?: any; // If provided, the modal acts as an Edit modal
 }
 
-export default function AddStudentModal({ isOpen, onClose, onSuccess, student }: AddStudentModalProps) {
+export default function AddTeacherModal({ isOpen, onClose, onSuccess, teacher }: AddTeacherModalProps) {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
     const [formData, setFormData] = useState({
-        name: student?.name || "",
-        lastname: student?.lastname || "",
-        email: student?.email || "",
+        name: teacher?.name || "",
+        lastname: teacher?.lastname || "",
+        email: teacher?.email || "",
         password: "gymcontrol123", // Default for new, not used for edit
-        phone: student?.phone || "",
-        dni: student?.dni || "",
-        plan_id: (student as any)?.plan_id || "",
-        teacher_id: (student as any)?.teacher_id || ""
+        phone: teacher?.phone || "",
+        dni: teacher?.dni || "",
+        rol: "teacher"
     });
 
-    const [plans, setPlans] = useState<any[]>([]);
-    const [teachers, setTeachers] = useState<any[]>([]);
-
-    const fetchInitialData = useCallback(async () => {
-        try {
-            const [plansRes, profilesRes] = await Promise.all([
-                api.get("/plans"),
-                api.get("/profiles")
-            ]);
-            setPlans(plansRes.data.data);
-            const allProfiles = profilesRes.data.data || [];
-            setTeachers(allProfiles.filter((p: any) => p.rol === 'teacher'));
-        } catch (err) {
-            console.error("Error fetching initial data:", err);
-        }
-    }, []);
-
-    // Reset form when student changes or modal opens
+    // Reset form when teacher changes or modal opens
     useEffect(() => {
         if (isOpen) {
-            fetchInitialData();
             setFormData({
-                name: student?.name || "",
-                lastname: student?.lastname || "",
-                email: student?.email || "",
+                name: teacher?.name || "",
+                lastname: teacher?.lastname || "",
+                email: teacher?.email || "",
                 password: "gymcontrol123",
-                phone: student?.phone || "",
-                dni: student?.dni || "",
-                plan_id: (student as any)?.plan_id || "",
-                teacher_id: (student as any)?.teacher_id || ""
+                phone: teacher?.phone || "",
+                dni: teacher?.dni || "",
+                rol: "teacher"
             });
             setError(null);
             setFieldErrors({});
         }
-    }, [isOpen, student, fetchInitialData]);
+    }, [isOpen, teacher]);
 
     const handleSubmit = useCallback(async (e: React.FormEvent) => {
         e.preventDefault();
@@ -89,10 +66,10 @@ export default function AddStudentModal({ isOpen, onClose, onSuccess, student }:
 
         setIsLoading(true);
         try {
-            if (student) {
+            if (teacher) {
                 // Edit mode
                 const { password, ...updateData } = formData;
-                await api.put(`/profiles/${student.id}`, updateData);
+                await api.put(`/profiles/${teacher.id}`, updateData);
                 onSuccess();
             } else {
                 // Create mode
@@ -105,17 +82,16 @@ export default function AddStudentModal({ isOpen, onClose, onSuccess, student }:
         } finally {
             setIsLoading(false);
         }
-    }, [formData, student, onSuccess, onClose]);
+    }, [formData, teacher, onSuccess, onClose]);
 
     return (
         <Modal
             isOpen={isOpen}
             onClose={onClose}
-            title={student ? "Editar Alumno" : "Nuevo Ingreso"}
+            title={teacher ? "Editar Profesor" : "Nuevo Profesor"}
             className="max-w-xl overflow-visible"
         >
             <form onSubmit={handleSubmit} className="space-y-6 overflow-visible">
-                {/* ... existing fields ... */}
                 {error && (
                     <div className="bg-rose-500/10 border border-rose-500/20 rounded-2xl p-4 text-rose-500 text-xs font-bold">
                         {error}
@@ -204,35 +180,6 @@ export default function AddStudentModal({ isOpen, onClose, onSuccess, student }:
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <PremiumSelect
-                        label="Plan de Membresía"
-                        placeholder="Sin plan"
-                        options={plans.map(p => ({
-                            id: p.id,
-                            label: p.name,
-                            sublabel: `$${Number(p.price).toLocaleString()} / mes`,
-                            icon: Zap
-                        }))}
-                        value={formData.plan_id}
-                        onChange={(val) => setFormData({ ...formData, plan_id: val })}
-                        error={fieldErrors.plan_id}
-                    />
-                    <PremiumSelect
-                        label="Profesor Asignado"
-                        placeholder="Sin profesor"
-                        options={teachers.map(t => ({
-                            id: t.id,
-                            label: `${t.name} ${t.lastname}`,
-                            sublabel: "Personal Trainer",
-                            icon: User
-                        }))}
-                        value={formData.teacher_id}
-                        onChange={(val) => setFormData({ ...formData, teacher_id: val })}
-                        error={fieldErrors.teacher_id}
-                    />
-                </div>
-
                 <div className="pt-4">
                     <button
                         type="submit"
@@ -243,13 +190,13 @@ export default function AddStudentModal({ isOpen, onClose, onSuccess, student }:
                             <Loader2 className="h-5 w-5 animate-spin mx-auto" />
                         ) : (
                             <span className="flex items-center justify-center gap-2 uppercase italic">
-                                {student ? "Guardar Cambios" : "Completar Registro"}
-                                {student ? <CheckCircle2 className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+                                {teacher ? "Guardar Cambios" : "Completar Registro"}
+                                {teacher ? <CheckCircle2 className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
                             </span>
                         )}
                     </button>
                     <p className="text-[9px] text-center text-neutral-600 font-bold uppercase tracking-widest mt-4 leading-relaxed">
-                        {student ? "Los cambios se aplicarán inmediatamente." : "El alumno recibirá un correo de bienvenida con su plan activo."}
+                        El profesor recibirá un correo para activar su cuenta y configurar su contraseña.
                     </p>
                 </div>
             </form>

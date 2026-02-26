@@ -39,7 +39,7 @@ export default function AdminDashboardPage() {
             const userRole = profileRes.data.data.rol;
 
             if (userRole !== "admin") {
-                router.push("/dashboard");
+                router.push(userRole === "teacher" ? "/teacher" : "/dashboard");
                 return;
             }
             const statsRes = await api.get("/admins/stats");
