@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import DashboardShell from "@/components/DashboardShell";
 import api from "@/lib/api";
-import { Dumbbell, Search, UserPlus, Edit2, Trash2, Filter, ChevronLeft, ChevronRight, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
+import { Dumbbell, Search, UserPlus, Edit2, Trash2, Filter, ChevronLeft, ChevronRight, CheckCircle2, AlertCircle, Loader2, CreditCard } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/lib/supabase";
@@ -227,6 +227,21 @@ export default function AdminStudentsPage() {
                                         </td>
                                         <td className="px-8 py-6 text-right">
                                             <div className="flex items-center justify-end gap-2 md:gap-3 transition-all">
+                                                <button
+                                                    onClick={() => {
+                                                        setStudentForPayment(student);
+                                                        setIsPaymentModalOpen(true);
+                                                    }}
+                                                    className={cn(
+                                                        "p-3 rounded-xl border transition-all shrink-0",
+                                                        (student.billing_state !== "OK" || (student.expiration_day && new Date(student.expiration_day) < new Date()) || !student.expiration_day)
+                                                            ? "bg-amber-500/10 hover:bg-amber-500/20 border-amber-500/20 hover:border-amber-500/30 text-amber-500"
+                                                            : "bg-white/5 hover:bg-white/10 border-white/5 text-neutral-500 hover:text-white"
+                                                    )}
+                                                    title="Registrar Pago"
+                                                >
+                                                    <CreditCard className="h-4 w-4" />
+                                                </button>
                                                 <button
                                                     onClick={() => router.push(`/admin/students/${student.id}/routine`)}
                                                     className="p-3 rounded-xl bg-white/5 hover:bg-rose-600/20 border border-white/5 hover:border-rose-600/30 text-neutral-500 hover:text-rose-500 transition-all shrink-0"

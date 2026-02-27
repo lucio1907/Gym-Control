@@ -96,7 +96,7 @@ export default function AdminDashboardPage() {
         { label: "Ingresos Mensuales", value: `$${stats?.totalRevenue.toLocaleString()}`, change: stats?.revenueChange, icon: CreditCard, color: "text-green-500" },
         { label: "Alumnos Activos", value: stats?.activeStudents, change: stats?.studentsChange, icon: Users, color: "text-rose-500" },
         { label: "Pagos Pendientes", value: stats?.pendingPayments, icon: AlertCircle, color: "text-amber-500" },
-        { label: "Capacidad Global", value: `${stats?.occupancyRate}%`, icon: Activity, color: "text-blue-500" },
+        { label: "Alumnos en Riesgo", value: stats?.atRiskCount, icon: Users, color: "text-rose-500" },
     ];
 
     return (

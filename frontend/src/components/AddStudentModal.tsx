@@ -89,15 +89,32 @@ export default function AddStudentModal({ isOpen, onClose, onSuccess, student }:
 
         setIsLoading(true);
         try {
+            // Convert empty strings to null for optional relations
+            const submitData = {
+                ...formData,
+                plan_id: formData.plan_id || null,
+                teacher_id: formData.teacher_id || null
+            };
+
             if (student) {
                 // Edit mode
-                const { password, ...updateData } = formData;
+                const { password, ...updateData } = submitData;
                 await api.put(`/profiles/${student.id}`, updateData);
                 onSuccess();
             } else {
                 // Create mode
-                const res = await api.post("/profiles/register", formData);
-                onSuccess(res.data.user);
+                const res = await api.post("/profiles/register", submitData);
+                const newUser = res.data.user;
+
+                // Enrich user with plan details if plan_id is present
+                if (submitData.plan_id) {
+                    const selectedPlan = plans.find(p => p.id === submitData.plan_id);
+                    if (selectedPlan) {
+                        newUser.plan = selectedPlan;
+                    }
+                }
+
+                onSuccess(newUser);
             }
             onClose();
         } catch (err: any) {
@@ -105,7 +122,7 @@ export default function AddStudentModal({ isOpen, onClose, onSuccess, student }:
         } finally {
             setIsLoading(false);
         }
-    }, [formData, student, onSuccess, onClose]);
+    }, [formData, student, plans, onSuccess, onClose]);
 
     return (
         <Modal
@@ -208,12 +225,15 @@ export default function AddStudentModal({ isOpen, onClose, onSuccess, student }:
                     <PremiumSelect
                         label="Plan de Membresía"
                         placeholder="Sin plan"
-                        options={plans.map(p => ({
-                            id: p.id,
-                            label: p.name,
-                            sublabel: `$${Number(p.price).toLocaleString()} / mes`,
-                            icon: Zap
-                        }))}
+                        options={[
+                            { id: "", label: "Sin plan", sublabel: "Opcional", icon: Zap },
+                            ...plans.map(p => ({
+                                id: p.id,
+                                label: p.name,
+                                sublabel: `$${Number(p.price).toLocaleString()} / mes`,
+                                icon: Zap
+                            }))
+                        ]}
                         value={formData.plan_id}
                         onChange={(val) => setFormData({ ...formData, plan_id: val })}
                         error={fieldErrors.plan_id}
@@ -221,12 +241,15 @@ export default function AddStudentModal({ isOpen, onClose, onSuccess, student }:
                     <PremiumSelect
                         label="Profesor Asignado"
                         placeholder="Sin profesor"
-                        options={teachers.map(t => ({
-                            id: t.id,
-                            label: `${t.name} ${t.lastname}`,
-                            sublabel: "Personal Trainer",
-                            icon: User
-                        }))}
+                        options={[
+                            { id: "", label: "Sin profesor", sublabel: "Opcional", icon: User },
+                            ...teachers.map(t => ({
+                                id: t.id,
+                                label: `${t.name} ${t.lastname}`,
+                                sublabel: "Personal Trainer",
+                                icon: User
+                            }))
+                        ]}
                         value={formData.teacher_id}
                         onChange={(val) => setFormData({ ...formData, teacher_id: val })}
                         error={fieldErrors.teacher_id}

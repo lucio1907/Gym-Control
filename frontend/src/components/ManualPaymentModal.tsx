@@ -37,7 +37,7 @@ export default function ManualPaymentModal({ isOpen, onClose, onSuccess, initial
 
     // Fetch default fee from settings
     useEffect(() => {
-        if (isOpen && !selectedStudent) {
+        if (isOpen && !selectedStudent && !initialStudent) {
             const fetchSettings = async () => {
                 try {
                     const res = await api.get("/settings");

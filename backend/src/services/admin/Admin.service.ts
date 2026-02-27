@@ -352,6 +352,30 @@ class AdminService extends BaseService<Model> {
             }))
         ].sort((a, b) => b.time.getTime() - a.time.getTime()).slice(0, 4);
 
+        const fourteenDaysAgo = new Date();
+        fourteenDaysAgo.setDate(now.getDate() - 14);
+
+        const activeStudentRecords = await ProfileModel.findAll({
+            where: {
+                rol: 'user',
+                billing_state: 'OK',
+                expiration_day: { [Op.gt]: now }
+            },
+            attributes: ['id']
+        });
+        const activeStudentIds = activeStudentRecords.map(s => s.get('id') as string);
+
+        const activeWhoAttendedCount = await AttendanceModel.count({
+            distinct: true,
+            col: 'profile_id',
+            where: {
+                profile_id: activeStudentIds,
+                check_in_time: { [Op.gte]: fourteenDaysAgo }
+            }
+        });
+
+        const atRiskCount = activeStudentIds.length - activeWhoAttendedCount;
+
         return {
             totalRevenue: currentTotalRevenue,
             activeStudents,
@@ -365,7 +389,7 @@ class AdminService extends BaseService<Model> {
                 date: p.payment_date
             })),
             logs,
-            occupancyRate: Math.min(Math.round((activeStudents / 100) * 100), 100),
+            atRiskCount,
             revenueChange,
             studentsChange,
             projection: revenueChange 
