@@ -22,6 +22,15 @@ export default function AdminDashboardPage() {
     // Modals state
     const [isAddStudentOpen, setIsAddStudentOpen] = useState(false);
     const [isManualPaymentOpen, setIsManualPaymentOpen] = useState(false);
+    const [studentForPayment, setStudentForPayment] = useState<any | null>(null);
+
+    const handleRegistrationSuccess = (newStudent?: any) => {
+        fetchData();
+        if (newStudent) {
+            setStudentForPayment(newStudent);
+            setIsManualPaymentOpen(true);
+        }
+    };
 
     const fetchData = async () => {
         setIsLoading(true);
@@ -30,7 +39,7 @@ export default function AdminDashboardPage() {
             const userRole = profileRes.data.data.rol;
 
             if (userRole !== "admin") {
-                router.push("/dashboard");
+                router.push(userRole === "teacher" ? "/teacher" : "/dashboard");
                 return;
             }
             const statsRes = await api.get("/admins/stats");
@@ -87,7 +96,7 @@ export default function AdminDashboardPage() {
         { label: "Ingresos Mensuales", value: `$${stats?.totalRevenue.toLocaleString()}`, change: stats?.revenueChange, icon: CreditCard, color: "text-green-500" },
         { label: "Alumnos Activos", value: stats?.activeStudents, change: stats?.studentsChange, icon: Users, color: "text-rose-500" },
         { label: "Pagos Pendientes", value: stats?.pendingPayments, icon: AlertCircle, color: "text-amber-500" },
-        { label: "Capacidad Global", value: `${stats?.occupancyRate}%`, icon: Activity, color: "text-blue-500" },
+        { label: "Alumnos en Riesgo", value: stats?.atRiskCount, icon: Users, color: "text-rose-500" },
     ];
 
     return (
@@ -261,13 +270,17 @@ export default function AdminDashboardPage() {
             <AddStudentModal
                 isOpen={isAddStudentOpen}
                 onClose={() => setIsAddStudentOpen(false)}
-                onSuccess={fetchData}
+                onSuccess={handleRegistrationSuccess}
             />
 
             <ManualPaymentModal
                 isOpen={isManualPaymentOpen}
-                onClose={() => setIsManualPaymentOpen(false)}
+                onClose={() => {
+                    setIsManualPaymentOpen(false);
+                    setStudentForPayment(null);
+                }}
                 onSuccess={fetchData}
+                initialStudent={studentForPayment}
             />
         </DashboardShell>
     );

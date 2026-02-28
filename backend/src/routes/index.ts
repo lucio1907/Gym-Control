@@ -7,6 +7,7 @@ import routinesRouter from "./routines/routines.routes";
 import adminRouter from "./admin/admin.routes";
 import paymentsRouter from "./payments/payments.routes";
 import settingsRouter from "./settings/settings.routes";
+import plansRouter from "./plans/plans.routes";
 
 const routes = Router();
 
@@ -17,6 +18,7 @@ routes.use("/api/routines", routinesRouter);
 routes.use("/api/admins", adminRouter);
 routes.use("/api/payments", paymentsRouter);
 routes.use("/api/settings", settingsRouter);
+routes.use("/api/plans", plansRouter);
 
 routes.use(errorHandler)
 

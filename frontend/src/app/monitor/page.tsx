@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import {
     CheckCircle2,
     XCircle,
@@ -23,7 +23,7 @@ export default function MonitorPage() {
     const [qrError, setQrError] = useState(false);
     const [status, setStatus] = useState<Status>("idle");
     const [message, setMessage] = useState<string | null>(null);
-    const [studentInfo, setStudentInfo] = useState<{ name: string, lastname: string, marked_days: number } | null>(null);
+    const [studentInfo, setStudentInfo] = useState<{ name: string, lastname: string, marked_days: number, rol?: string } | null>(null);
     const [currentTime, setCurrentTime] = useState(new Date());
 
     const inputRef = useRef<HTMLInputElement>(null);
@@ -116,7 +116,7 @@ export default function MonitorPage() {
         };
     }, []);
 
-    const handleCheckIn = async (dniValue: string) => {
+    const handleCheckIn = useCallback(async (dniValue: string) => {
         if (status !== "idle" || !dniValue) return;
 
         setStatus("loading");
@@ -145,13 +145,13 @@ export default function MonitorPage() {
                 setDni("");
             }, 4000);
         }
-    };
+    }, [status]);
 
-    const onKeyDown = (e: React.KeyboardEvent) => {
+    const onKeyDown = useCallback((e: React.KeyboardEvent) => {
         if (e.key === "Enter") {
             handleCheckIn(dni);
         }
-    };
+    }, [handleCheckIn, dni]);
 
     return (
         <div className="min-h-screen bg-[#050505] text-white flex flex-col font-sans selection:bg-rose-500/30 overflow-hidden">
@@ -215,18 +215,27 @@ export default function MonitorPage() {
 
                             <h2 className={cn(
                                 "text-6xl md:text-8xl font-black uppercase italic font-outfit tracking-tighter mb-6",
-                                status === "success" ? "text-green-500 text-glow" : "text-rose-500"
+                                status === "success"
+                                    ? (studentInfo?.rol === 'teacher' ? "text-rose-500 text-glow-rose" : "text-green-500 text-glow")
+                                    : "text-rose-500"
                             )}>
-                                {status === "success" ? "¡Bienvenido!" : "Acceso Denegado"}
+                                {status === "success" ? (studentInfo?.rol === 'teacher' ? "Staff / Profesor" : "¡Bienvenido!") : "Acceso Denegado"}
                             </h2>
 
                             {status === "success" && studentInfo && (
                                 <div className="space-y-4">
                                     <p className="text-4xl font-black text-white uppercase italic tracking-tight">{studentInfo.name} {studentInfo.lastname}</p>
-                                    <div className="bg-white/5 border border-white/10 rounded-2xl px-8 py-4 inline-flex items-center gap-4">
-                                        <span className="text-[10px] font-black text-neutral-500 uppercase tracking-widest leading-none">Asistencias del mes</span>
-                                        <span className="text-4xl font-black text-green-500 font-outfit leading-none">{studentInfo.marked_days}</span>
-                                    </div>
+                                    {studentInfo.rol !== 'teacher' ? (
+                                        <div className="bg-white/5 border border-white/10 rounded-2xl px-8 py-4 inline-flex items-center gap-4">
+                                            <span className="text-[10px] font-black text-neutral-500 uppercase tracking-widest leading-none">Asistencias del mes</span>
+                                            <span className="text-4xl font-black text-green-500 font-outfit leading-none">{studentInfo.marked_days}</span>
+                                        </div>
+                                    ) : (
+                                        <div className="bg-rose-600/10 border border-rose-600/30 rounded-2xl px-8 py-4 inline-flex items-center gap-4">
+                                            <span className="text-[10px] font-black text-rose-500 uppercase tracking-widest leading-none">Acceso Autorizado</span>
+                                            <Dumbbell className="h-8 w-8 text-rose-600 animate-pulse" />
+                                        </div>
+                                    )}
                                 </div>
                             )}
 

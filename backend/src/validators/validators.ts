@@ -6,7 +6,8 @@ export const RegisterSchema = z.object({
     email: z.email("Invalid email"),
     password: z.string().min(8, 'Password must be up to 8 characters'),
     phone: z.string().min(8, 'Invalid phone number'),
-    dni: z.string().min(7, 'Invalid DNI').max(9)
+    dni: z.string().min(7, 'Invalid DNI').max(9),
+    rol: z.enum(["admin", "user", "teacher"]).optional()
 });
 
 export const LoginSchema = z.object({

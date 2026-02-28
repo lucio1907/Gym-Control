@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { Profile } from "@/types/profiles";
 import { Loader2, CreditCard, Search, Calendar, DollarSign, Wallet } from "lucide-react";
 import Modal from "./Modal";
 import api from "@/lib/api";
@@ -10,15 +11,16 @@ interface ManualPaymentModalProps {
     isOpen: boolean;
     onClose: () => void;
     onSuccess: () => void;
+    initialStudent?: Profile | null;
 }
 
-export default function ManualPaymentModal({ isOpen, onClose, onSuccess }: ManualPaymentModalProps) {
+export default function ManualPaymentModal({ isOpen, onClose, onSuccess, initialStudent }: ManualPaymentModalProps) {
     const [isLoading, setIsLoading] = useState(false);
     const [searchLoading, setSearchLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [searchTerm, setSearchTerm] = useState("");
-    const [students, setStudents] = useState<any[]>([]);
-    const [selectedStudent, setSelectedStudent] = useState<any>(null);
+    const [students, setStudents] = useState<Profile[]>([]);
+    const [selectedStudent, setSelectedStudent] = useState<Profile | null>(null);
 
     const [formData, setFormData] = useState({
         amount: "",
@@ -26,9 +28,16 @@ export default function ManualPaymentModal({ isOpen, onClose, onSuccess }: Manua
         date: new Date().toISOString().split('T')[0]
     });
 
+    // Reset when modal opens with initial student
+    useEffect(() => {
+        if (isOpen && initialStudent) {
+            setSelectedStudent(initialStudent);
+        }
+    }, [isOpen, initialStudent]);
+
     // Fetch default fee from settings
     useEffect(() => {
-        if (isOpen) {
+        if (isOpen && !selectedStudent && !initialStudent) {
             const fetchSettings = async () => {
                 try {
                     const res = await api.get("/settings");
@@ -44,7 +53,37 @@ export default function ManualPaymentModal({ isOpen, onClose, onSuccess }: Manua
             };
             fetchSettings();
         }
-    }, [isOpen]);
+    }, [isOpen, selectedStudent]);
+
+    // Auto-fill from student's plan
+    useEffect(() => {
+        if (selectedStudent) {
+            if (selectedStudent.plan) {
+                setFormData(prev => ({
+                    ...prev,
+                    amount: selectedStudent.plan?.price.toString() || prev.amount,
+                    concept: `Cuota Mensual - ${selectedStudent.plan?.name}` || prev.concept
+                }));
+            } else {
+                // Fallback to default setting if no plan assigned
+                const fetchSettings = async () => {
+                    try {
+                        const res = await api.get("/settings");
+                        if (res.data.data.base_fee) {
+                            setFormData(prev => ({
+                                ...prev,
+                                amount: res.data.data.base_fee.toString(),
+                                concept: "Plan Mensual Musculación"
+                            }));
+                        }
+                    } catch (err) {
+                        console.error("Error fetching settings", err);
+                    }
+                };
+                fetchSettings();
+            }
+        }
+    }, [selectedStudent]);
 
     // Simple search effect
     useEffect(() => {
@@ -77,7 +116,7 @@ export default function ManualPaymentModal({ isOpen, onClose, onSuccess }: Manua
         return () => clearTimeout(delayDebounceFn);
     }, [searchTerm]);
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = useCallback(async (e: React.FormEvent) => {
         e.preventDefault();
         if (!selectedStudent) {
             setError("Seleccioná un alumno");
@@ -110,7 +149,7 @@ export default function ManualPaymentModal({ isOpen, onClose, onSuccess }: Manua
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [selectedStudent, formData, onSuccess, onClose]);
 
     return (
         <Modal isOpen={isOpen} onClose={onClose} title="Cobro Manual" className="max-w-xl">
@@ -133,7 +172,14 @@ export default function ManualPaymentModal({ isOpen, onClose, onSuccess }: Manua
                                 </div>
                                 <div>
                                     <p className="text-sm font-black text-white uppercase italic">{selectedStudent.name} {selectedStudent.lastname}</p>
-                                    <p className="text-[9px] font-bold text-neutral-500 uppercase tracking-widest mt-0.5">DNI: {selectedStudent.dni}</p>
+                                    <div className="flex gap-2 mt-0.5">
+                                        <p className="text-[9px] font-bold text-neutral-500 uppercase tracking-widest">DNI: {selectedStudent.dni}</p>
+                                        {selectedStudent.plan && (
+                                            <p className="text-[9px] font-bold text-rose-500 uppercase tracking-widest border-l border-white/10 pl-2">
+                                                Plan: {selectedStudent.plan.name}
+                                            </p>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                             <button

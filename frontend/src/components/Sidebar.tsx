@@ -1,13 +1,13 @@
 "use client";
 
-import { LogOut, LayoutDashboard, User, Dumbbell, Activity, Users, CreditCard, Settings, X } from "lucide-react";
+import { LogOut, LayoutDashboard, User, Dumbbell, Activity, Users, CreditCard, Settings, X, BarChart3 } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import api from "@/lib/api";
 
 interface SidebarProps {
-    role?: "ADMIN" | "STUDENT";
+    role?: "ADMIN" | "STUDENT" | "TEACHER";
     userName?: string;
     isMobile?: boolean;
     onMobileClose?: () => void;
@@ -36,11 +36,19 @@ export default function Sidebar({ role = "STUDENT", userName, isMobile, onMobile
     const adminLinks = [
         { label: "Resumen Hub", icon: LayoutDashboard, href: "/admin" },
         { label: "Alumnos", icon: Users, href: "/admin/students" },
+        { label: "Profesores", icon: User, href: "/admin/teachers" },
+        { label: "Estadísticas", icon: BarChart3, href: "/admin/statistics" },
         { label: "Pagos y Caja", icon: CreditCard, href: "/admin/payments" },
         { label: "Configuración", icon: Settings, href: "/admin/settings" },
     ];
 
-    const activeLinks = role === "ADMIN" ? adminLinks : studentLinks;
+    const teacherLinks = [
+        { label: "Mi Panel", icon: LayoutDashboard, href: "/teacher" },
+        { label: "Mis Alumnos", icon: Users, href: "/teacher/students" },
+    ];
+
+    const activeLinks = role === "ADMIN" ? adminLinks : role === "TEACHER" ? teacherLinks : studentLinks;
+    const roleLabel = role === "ADMIN" ? "Administración" : role === "TEACHER" ? "Panel Profesor" : "Panel Alumno";
 
     const navigate = (href: string) => {
         router.push(href);
@@ -73,7 +81,7 @@ export default function Sidebar({ role = "STUDENT", userName, isMobile, onMobile
 
             <nav className="flex-1 space-y-3 overflow-y-auto custom-scrollbar pr-2">
                 <p className="text-[10px] font-black text-neutral-600 uppercase tracking-[0.3em] ml-4 mb-4">
-                    {role === "ADMIN" ? "Administración" : "Panel de Alumno"}
+                    {roleLabel}
                 </p>
                 {activeLinks.map((link) => {
                     const isActive = pathname === link.href;
@@ -104,7 +112,7 @@ export default function Sidebar({ role = "STUDENT", userName, isMobile, onMobile
             <div className="pt-10 border-t border-white/5">
                 <div className="mb-6 px-4">
                     <p className="text-[10px] font-black text-neutral-600 uppercase tracking-widest leading-none mb-1">Usuario Activo</p>
-                    <p className="text-xs font-black text-white truncate italic">{userName || (role === 'ADMIN' ? 'Administrador' : 'Alumno')}</p>
+                    <p className="text-xs font-black text-white truncate italic">{userName || (role === 'ADMIN' ? 'Administrador' : role === 'TEACHER' ? 'Profesor' : 'Alumno')}</p>
                 </div>
                 <button
                     onClick={handleLogout}

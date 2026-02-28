@@ -16,10 +16,11 @@ Esta es la interfaz de usuario de **Gym Control**, una aplicación web moderna y
 
 ## ✨ Características Premium
 
-- **Diseño Glassmorphism**: Uso extendido de efectos de desenfoque y capas translúcidas para un look moderno.
-- **Micro-interacciones**: Animaciones suaves al navegar, abrir modales y realizar acciones.
-- **Feedback Visual**: Sistema de notificaciones personalizado (`FeedbackModal`) que reemplaza las alertas nativas del navegador.
-- **Responsive Design**: Totalmente adaptado para dispositivos móviles, tablets y monitores de escritorio.
+- **Diseño Glassmorphism & UX Premium**: Capas translúcidas, animaciones con Framer Motion y feedback visual mediante `FeedbackModal`.
+- **Business Analytics Avanzado**: Dashboard estadístico con mapas de calor (Recharts), tendencias de crecimiento y control financiero integrado.
+- **Optimización de Alta Carga**: Uso de `content-visibility: auto` y capas promovidas por GPU (`will-change`) para asegurar 60fps constantes.
+- **Flujos de Trabajo Inteligentes**: Automatización del alta de alumnos con apertura inmediata de cobro pre-llenado.
+- **Responsive Design**: Totalmente adaptado para móviles, tablets y monitores de escritorio.
 - **Monitor Terminal**: Interfaz optimizada para el ingreso de alumnos, con visualización de QR y feedback de estado instantáneo.
 
 ---

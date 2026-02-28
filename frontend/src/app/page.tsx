@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Lock, Mail, Eye, EyeOff, Dumbbell, Loader2, AlertCircle, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import api from "@/lib/api";
@@ -15,6 +15,14 @@ export default function LoginPage() {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const emailInputRef = useRef<HTMLInputElement>(null);
+
+  const translateError = (msg: string) => {
+    if (msg.toLowerCase().includes("user not found")) return "Usuario no encontrado. Verificá tu correo.";
+    if (msg.toLowerCase().includes("invalid password")) return "Contraseña incorrecta. Intentá de nuevo.";
+    if (msg.toLowerCase().includes("already exists")) return "Este correo ya está registrado.";
+    return "Credenciales inválidas. Revisa tu correo y contraseña.";
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,12 +48,19 @@ export default function LoginPage() {
         const role = response.data.user.credentials.role;
         if (role === "admin") {
           router.push("/admin");
+        } else if (role === "teacher") {
+          router.push("/teacher");
         } else {
           router.push("/dashboard");
         }
       }
     } catch (err: any) {
-      setError(err.response?.data?.message || "Credenciales inválidas. Revisá tu mail y contraseña.");
+      const serverMsg = err.response?.data?.message || "";
+      setError(translateError(serverMsg));
+      // Clear fields and focus
+      setEmail("");
+      setPassword("");
+      emailInputRef.current?.focus();
     } finally {
       setIsLoading(false);
     }
@@ -97,6 +112,7 @@ export default function LoginPage() {
                     "input-premium pl-16 text-white",
                     fieldErrors.email && "border-rose-500/50 bg-rose-500/5"
                   )}
+                  ref={emailInputRef}
                   value={email}
                   onChange={(e) => {
                     setEmail(e.target.value);
@@ -155,11 +171,6 @@ export default function LoginPage() {
             </button>
           </form>
 
-          <div className="mt-12 pt-8 border-t border-white/5 flex flex-col items-center gap-4">
-            <p className="text-sm text-neutral-500 font-bold">
-              ¿Sos nuevo? <a href="/register" className="text-rose-500 hover:text-rose-400 font-black">UNITE AL EQUIPO</a>
-            </p>
-          </div>
         </div>
       </main>
 

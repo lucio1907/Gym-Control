@@ -52,7 +52,7 @@ export default function Modal({ isOpen, onClose, title, children, className }: M
                         exit={{ opacity: 0, scale: 0.95, y: 20 }}
                         transition={{ type: "spring", duration: 0.5, bounce: 0.3 }}
                         className={cn(
-                            "relative z-10 w-full max-w-lg overflow-hidden glass-card rounded-[2.5rem] border-white/10 shadow-2xl",
+                            "relative z-10 w-full max-w-lg overflow-visible glass-card rounded-[2.5rem] border-white/10 shadow-2xl",
                             className
                         )}
                         ref={modalRef}

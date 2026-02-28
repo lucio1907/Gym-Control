@@ -1,16 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import DashboardShell from "@/components/DashboardShell";
 import api from "@/lib/api";
-import { Dumbbell, Search, UserPlus, Edit2, Trash2, Filter, ChevronLeft, ChevronRight, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
+import { Dumbbell, Search, UserPlus, Edit2, Trash2, Filter, ChevronLeft, ChevronRight, CheckCircle2, AlertCircle, Loader2, CreditCard } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/lib/supabase";
 import AddStudentModal from "@/components/AddStudentModal";
 import DeleteConfirmationModal from "@/components/DeleteConfirmationModal";
 import FeedbackModal, { FeedbackType } from "@/components/FeedbackModal";
+import ManualPaymentModal from "@/components/ManualPaymentModal";
 
 export default function AdminStudentsPage() {
     const router = useRouter();
@@ -22,6 +23,8 @@ export default function AdminStudentsPage() {
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [studentToDelete, setStudentToDelete] = useState<any | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
+    const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+    const [studentForPayment, setStudentForPayment] = useState<any | null>(null);
     const [feedback, setFeedback] = useState<{
         isOpen: boolean;
         type: FeedbackType;
@@ -34,11 +37,11 @@ export default function AdminStudentsPage() {
         message: ""
     });
 
-    const showFeedback = (type: FeedbackType, title: string, message: string) => {
+    const showFeedback = useCallback((type: FeedbackType, title: string, message: string) => {
         setFeedback({ isOpen: true, type, title, message });
-    };
+    }, []);
 
-    const fetchStudents = async () => {
+    const fetchStudents = useCallback(async () => {
         try {
             const res = await api.get("/profiles");
             // Backend uses 'user' role for students
@@ -48,7 +51,7 @@ export default function AdminStudentsPage() {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, []);
 
     useEffect(() => {
         fetchStudents();
@@ -64,14 +67,14 @@ export default function AdminStudentsPage() {
         return () => {
             supabase.removeChannel(profilesChannel);
         };
-    }, []);
+    }, [fetchStudents]);
 
-    const handleDeleteClick = (student: any) => {
+    const handleDeleteClick = useCallback((student: any) => {
         setStudentToDelete(student);
         setIsDeleteModalOpen(true);
-    };
+    }, []);
 
-    const confirmDelete = async () => {
+    const confirmDelete = useCallback(async () => {
         if (!studentToDelete) return;
 
         setIsDeleting(true);
@@ -87,13 +90,24 @@ export default function AdminStudentsPage() {
         } finally {
             setIsDeleting(false);
         }
-    };
+    }, [studentToDelete, fetchStudents, showFeedback]);
 
-    const filteredStudents = students.filter(s =>
-        s.name.toLowerCase().includes(search.toLowerCase()) ||
-        s.lastname.toLowerCase().includes(search.toLowerCase()) ||
-        s.dni.includes(search)
-    );
+    const handleRegistrationSuccess = useCallback((newStudent?: any) => {
+        fetchStudents();
+        if (newStudent) {
+            setStudentForPayment(newStudent);
+            setIsPaymentModalOpen(true);
+        }
+    }, [fetchStudents]);
+
+    const filteredStudents = useMemo(() => {
+        const query = search.toLowerCase();
+        return students.filter(s =>
+            s.name.toLowerCase().includes(query) ||
+            s.lastname.toLowerCase().includes(query) ||
+            s.dni.includes(query)
+        );
+    }, [students, search]);
 
     return (
         <DashboardShell role="ADMIN">
@@ -141,7 +155,8 @@ export default function AdminStudentsPage() {
                         <thead className="border-b border-white/5 bg-white/[0.02]">
                             <tr className="font-outfit text-white uppercase tracking-widest text-[9px] md:text-[10px]">
                                 <th className="px-8 py-8 font-black">Alumno</th>
-                                <th className="px-6 py-8 font-black">DNI / Identificación</th>
+                                <th className="px-6 py-8 font-black">Identificación</th>
+                                <th className="px-6 py-8 font-black">Plan</th>
                                 <th className="px-6 py-8 font-black">Estado Pago</th>
                                 <th className="px-8 py-8 text-right font-black">Acciones</th>
                             </tr>
@@ -176,6 +191,16 @@ export default function AdminStudentsPage() {
                                         <td className="px-6 py-6 whitespace-nowrap">
                                             <p className="text-xs md:text-sm font-black font-outfit text-neutral-300">{student.dni}</p>
                                         </td>
+                                        <td className="px-6 py-6 whitespace-nowrap">
+                                            {student.plan ? (
+                                                <div className="flex flex-col">
+                                                    <p className="text-xs font-black text-rose-500 uppercase tracking-tighter italic">{student.plan.name}</p>
+                                                    <p className="text-[10px] font-bold text-neutral-600">${Number(student.plan.price).toLocaleString()}</p>
+                                                </div>
+                                            ) : (
+                                                <p className="text-[10px] font-black text-neutral-600 uppercase italic">Sin plan asignado</p>
+                                            )}
+                                        </td>
                                         <td className="px-6 py-6 font-outfit">
                                             {(() => {
                                                 const hasDate = !!student.expiration_day;
@@ -202,6 +227,21 @@ export default function AdminStudentsPage() {
                                         </td>
                                         <td className="px-8 py-6 text-right">
                                             <div className="flex items-center justify-end gap-2 md:gap-3 transition-all">
+                                                <button
+                                                    onClick={() => {
+                                                        setStudentForPayment(student);
+                                                        setIsPaymentModalOpen(true);
+                                                    }}
+                                                    className={cn(
+                                                        "p-3 rounded-xl border transition-all shrink-0",
+                                                        (student.billing_state !== "OK" || (student.expiration_day && new Date(student.expiration_day) < new Date()) || !student.expiration_day)
+                                                            ? "bg-amber-500/10 hover:bg-amber-500/20 border-amber-500/20 hover:border-amber-500/30 text-amber-500"
+                                                            : "bg-white/5 hover:bg-white/10 border-white/5 text-neutral-500 hover:text-white"
+                                                    )}
+                                                    title="Registrar Pago"
+                                                >
+                                                    <CreditCard className="h-4 w-4" />
+                                                </button>
                                                 <button
                                                     onClick={() => router.push(`/admin/students/${student.id}/routine`)}
                                                     className="p-3 rounded-xl bg-white/5 hover:bg-rose-600/20 border border-white/5 hover:border-rose-600/30 text-neutral-500 hover:text-rose-500 transition-all shrink-0"
@@ -260,8 +300,21 @@ export default function AdminStudentsPage() {
                     setIsAddModalOpen(false);
                     setStudentToEdit(null);
                 }}
-                onSuccess={fetchStudents}
+                onSuccess={handleRegistrationSuccess}
                 student={studentToEdit}
+            />
+
+            <ManualPaymentModal
+                isOpen={isPaymentModalOpen}
+                onClose={() => {
+                    setIsPaymentModalOpen(false);
+                    setStudentForPayment(null);
+                }}
+                onSuccess={() => {
+                    fetchStudents();
+                    showFeedback("success", "Pago Registrado", "El alumno ya se encuentra al día.");
+                }}
+                initialStudent={studentForPayment}
             />
 
             <DeleteConfirmationModal

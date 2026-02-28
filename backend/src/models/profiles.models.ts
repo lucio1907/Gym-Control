@@ -25,7 +25,7 @@ const ProfileModel = sequelizeConfig.define("profile", {
     allowNull: false,
   },
   rol: {
-    type: DataTypes.ENUM("admin", "user"),
+    type: DataTypes.ENUM("admin", "user", "teacher"),
     defaultValue: "user",
     allowNull: false,
   },
@@ -57,6 +57,14 @@ const ProfileModel = sequelizeConfig.define("profile", {
   },
   recovery_token_expires: {
     type: DataTypes.DATE,
+    allowNull: true,
+  },
+  plan_id: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
+  teacher_id: {
+    type: DataTypes.STRING,
     allowNull: true,
   }
 }, {

@@ -3,6 +3,7 @@ import PaymentsModel from "./payments.models";
 import AttendanceModel from "./attendance.models";
 import RoutinesModel from "./routines.models";
 import SettingsModel from "./settings.models";
+import PlanModel from "./plans.models";
 
 // Profile has many Payments
 ProfileModel.hasMany(PaymentsModel, {
@@ -32,4 +33,24 @@ ProfileModel.hasMany(RoutinesModel, {
 RoutinesModel.belongsTo(ProfileModel, {
     foreignKey: "profile_id",
     as: "profile",
+});
+
+// Plan has many Profiles
+PlanModel.hasMany(ProfileModel, {
+    foreignKey: "plan_id",
+    as: "profiles",
+});
+ProfileModel.belongsTo(PlanModel, {
+    foreignKey: "plan_id",
+    as: "plan",
+});
+
+// Teacher can have many students
+ProfileModel.hasMany(ProfileModel, {
+    foreignKey: "teacher_id",
+    as: "students",
+});
+ProfileModel.belongsTo(ProfileModel, {
+    foreignKey: "teacher_id",
+    as: "teacher",
 });
