@@ -7,12 +7,13 @@ import {
     LineChart, Line, PieChart, Pie, Cell, Legend, Cell as ReCell, YAxis as ReYAxis
 } from "recharts";
 import {
-    BarChart3, Users, Zap, AlertTriangle, TrendingUp, Calendar,
+    BarChart3, Users, Zap, AlertTriangle, TrendingUp,
     Clock, DollarSign, ArrowUpRight, ArrowDownRight, UserMinus, Download
 } from "lucide-react";
 import { motion } from "framer-motion";
 import api from "@/lib/api";
 import { cn } from "@/lib/utils";
+import PremiumDatePicker from "@/components/PremiumDatePicker";
 
 const COLORS = ["#f43f5e", "#fb7185", "#fda4af", "#fecdd3", "#fff1f2"];
 
@@ -77,17 +78,19 @@ const CustomAttendanceTooltip = ({ active, payload, label }: any) => {
 export default function StatisticsPage() {
     const [data, setData] = useState<AnalyticsData | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
 
     const fetchAnalytics = useCallback(async () => {
+        setIsLoading(true);
         try {
-            const res = await api.get("/admins/analytics");
+            const res = await api.get(`/admins/analytics?date=${selectedDate}`);
             setData(res.data.data);
         } catch (err) {
             console.error("Error fetching analytics:", err);
         } finally {
             setIsLoading(false);
         }
-    }, []);
+    }, [selectedDate]);
 
     const handleDownloadReport = async () => {
         try {
@@ -171,14 +174,22 @@ export default function StatisticsPage() {
         <DashboardShell role="ADMIN">
             <div className="space-y-10 max-w-full overflow-x-hidden">
                 {/* Header */}
-                <header>
-                    <h1 className="text-4xl font-black tracking-tightest uppercase italic flex items-center gap-4">
-                        <BarChart3 className="h-10 w-10 text-rose-600" />
-                        Estadísticas <span className="text-rose-600">de Negocio</span>
-                    </h1>
-                    <p className="text-neutral-400 font-medium mt-2 max-w-2xl italic">
-                        Análisis profundo de rendimiento, retención y flujos de caja para la toma de decisiones estratégicas.
-                    </p>
+                <header className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+                    <div className="space-y-2">
+                        <h1 className="text-4xl font-black tracking-tightest uppercase italic flex items-center gap-4">
+                            <BarChart3 className="h-10 w-10 text-rose-600" />
+                            Estadísticas <span className="text-rose-600">de Negocio</span>
+                        </h1>
+                        <p className="text-neutral-400 font-medium max-w-2xl italic">
+                            Análisis profundo de rendimiento, retención y flujos de caja para la toma de decisiones estratégicas.
+                        </p>
+                    </div>
+
+                    <PremiumDatePicker
+                        label="Fecha de Análisis"
+                        value={selectedDate}
+                        onChange={(val) => setSelectedDate(val)}
+                    />
                 </header>
 
                 {/* Primary KPIs */}
@@ -367,8 +378,8 @@ export default function StatisticsPage() {
                             <Clock className="h-6 w-6 text-rose-600" />
                             Mapa de Calor de Asistencia
                         </h3>
-                        <div className="text-[10px] font-black text-neutral-500 uppercase tracking-widest bg-white/5 px-3 py-1 rounded-full border border-white/5">
-                            Últimos 30 días
+                        <div className="text-[10px] font-black text-neutral-500 uppercase tracking-widest bg-white/5 px-3 py-1 rounded-full border border-white/5 italic">
+                            Referencia: {new Date(selectedDate).toLocaleDateString()}
                         </div>
                     </div>
 

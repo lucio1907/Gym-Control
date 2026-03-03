@@ -65,7 +65,8 @@ export const getDashboardStats = async (req: Request, res: Response, next: NextF
 
 export const getDetailedAnalytics = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const analytics = await adminService.getDetailedAnalytics();
+        const { date } = req.query;
+        const analytics = await adminService.getDetailedAnalytics(date as string);
         return res.json({ message: 'Detailed business analytics', data: analytics, status: 'OK' });
     } catch (error) {
         next(error);

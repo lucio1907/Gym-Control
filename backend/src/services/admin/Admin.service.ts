@@ -128,16 +128,28 @@ class AdminService extends BaseService<Model> {
         });
     };
 
-    public getDetailedAnalytics = async () => {
-        const now = new Date();
+    public getDetailedAnalytics = async (dateStr?: string) => {
+        let now: Date;
+        if (dateStr) {
+            const [year, month, day] = dateStr.split('-').map(Number);
+            now = new Date(year, month - 1, day, 23, 59, 59, 999);
+        } else {
+            now = new Date();
+        }
+
         const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-        const fourteenDaysAgo = new Date();
+        const fourteenDaysAgo = new Date(now);
         fourteenDaysAgo.setDate(now.getDate() - 14);
 
         // 1. Attendance Heatmap Data (Last 30 days)
         const attendanceRecords = await AttendanceModel.findAll({
             where: {
-                check_in_time: { [Op.gte]: new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000) }
+                check_in_time: { 
+                    [Op.between]: [
+                        new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000),
+                        now
+                    ]
+                }
             },
             attributes: ['check_in_time']
         });
@@ -165,7 +177,8 @@ class AdminService extends BaseService<Model> {
             where: {
                 rol: 'user',
                 billing_state: 'OK',
-                expiration_day: { [Op.gt]: now }
+                expiration_day: { [Op.gt]: now },
+                createdAt: { [Op.lte]: now }
             },
             attributes: ['id', 'name', 'lastname', 'email', 'phone']
         });
@@ -195,20 +208,20 @@ class AdminService extends BaseService<Model> {
                 [sequelizeConfig.fn('SUM', sequelizeConfig.col('amount')), 'total'],
                 [sequelizeConfig.fn('COUNT', sequelizeConfig.col('id')), 'count']
             ],
-            where: { status: 'completed', payment_date: { [Op.gte]: startOfMonth } },
+            where: { status: 'completed', payment_date: { [Op.between]: [startOfMonth, now] } },
             group: ['concept']
         });
 
         const totalActive = activeStudents.length;
         const totalRevenueResult = await PaymentsModel.sum('amount', {
-            where: { status: 'completed', payment_date: { [Op.gte]: startOfMonth } }
+            where: { status: 'completed', payment_date: { [Op.between]: [startOfMonth, now] } }
         });
         const monthlyRevenue = Number(totalRevenueResult) || 0;
         const arpu = totalActive > 0 ? Math.round(monthlyRevenue / totalActive) : 0;
         
         // 4. Net Growth (This Month)
         const registrations = await ProfileModel.count({
-            where: { rol: 'user', createdAt: { [Op.gte]: startOfMonth } }
+            where: { rol: 'user', createdAt: { [Op.between]: [startOfMonth, now] } }
         });
         const expirations = await ProfileModel.count({
             where: { 
